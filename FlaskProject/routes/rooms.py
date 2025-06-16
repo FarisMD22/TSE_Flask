@@ -1,5 +1,9 @@
 from flask import Blueprint,render_template,request,redirect,url_for,flash,session
 from models.database import db
+from models.user import has_permission
+
+# simple in-memory booking storage
+bookings = []
 
 # Create rooms blueprint
 rooms_bp = Blueprint('rooms',__name__,url_prefix='/rooms')
@@ -356,6 +360,27 @@ def delete_room(room_id):
         print(f"Error deleting room: {e}")
         flash('Error deleting room','error')
 
+    return redirect(url_for('rooms.list_rooms'))
+
+
+@rooms_bp.route('/book/<int:room_id>', methods=['POST'])
+def book_room(room_id):
+    """Allow a logged in user to book a room (in-memory demo)"""
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    if not has_permission(session.get('role','Read Only'), 'book_room'):
+        flash('You do not have permission to book rooms','error')
+        return redirect(url_for('rooms.list_rooms'))
+
+    user_id = session['user_id']
+    for b in bookings:
+        if b['user_id'] == user_id and b['room_id'] == room_id:
+            flash('You already booked this room','info')
+            return redirect(url_for('rooms.list_rooms'))
+
+    bookings.append({'user_id': user_id, 'room_id': room_id})
+    flash('Room booked successfully','success')
     return redirect(url_for('rooms.list_rooms'))
 
 

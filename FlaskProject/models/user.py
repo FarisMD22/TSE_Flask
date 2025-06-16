@@ -34,6 +34,10 @@ ROLES = {
         'description': 'Financial operations',
         'permissions': ['students_view','payments','reports_financial']
     },
+    'User': {
+        'description': 'Self service user',
+        'permissions': ['book_room','rooms_view']
+    },
     'Read Only': {
         'description': 'View only access',
         'permissions': ['students_view','rooms_view','assignments_view','payments_view','reports_view']
