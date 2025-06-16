@@ -165,6 +165,13 @@
                                    class="btn btn-outline-primary" title="Edit Room" data-bs-toggle="tooltip">
                                     <i class="fas fa-edit"></i>
                                 </a>
+                                {% if room[7] == 'Available' %}
+                                <form method="POST" action="{{ url_for('rooms.book_room', room_id=room[0]) }}" style="display:inline;">
+                                    <button type="submit" class="btn btn-outline-success" title="Book Room" data-bs-toggle="tooltip">
+                                        <i class="fas fa-shopping-cart"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
                                 {% if room[4] == 0 %}
                                 <form method="POST" action="{{ url_for('rooms.delete_room', room_id=room[0]) }}"
                                       style="display: inline;"

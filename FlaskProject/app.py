@@ -260,6 +260,58 @@ def login():
         '''
 
 
+@app.route('/signup', methods=['GET','POST'])
+def signup():
+    if request.method == 'POST':
+        username = request.form.get('username','').strip()
+        full_name = request.form.get('full_name','').strip()
+        email = request.form.get('email','').strip()
+        password = request.form.get('password','').strip()
+
+        if not all([username,full_name,email,password]):
+            flash('All fields are required','error')
+            return render_template('auth/register.html')
+
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+
+        if db:
+            try:
+                existing = db.execute_query(
+                    "SELECT user_id FROM users WHERE username = %s OR email = %s",
+                    (username,email))
+                if existing:
+                    flash('Username or email already exists','error')
+                    return render_template('auth/register.html')
+
+                user_id = db.execute_insert(
+                    """INSERT INTO users (username,password,full_name,email,role,status)
+                       VALUES (%s,%s,%s,%s,%s,%s)""",
+                    (username,password_hash,full_name,email,'User','Active'))
+                if user_id:
+                    flash('Account created, please sign in','success')
+                    return redirect(url_for('login'))
+                else:
+                    flash('Error creating account','error')
+            except Exception as e:
+                print(f'Registration error: {e}')
+                flash('Database error during registration','error')
+        else:
+            flash('Database unavailable','error')
+
+    try:
+        return render_template('auth/register.html')
+    except Exception:
+        return '''
+        <form method="POST">
+            <input name="username" placeholder="Username" required><br>
+            <input name="full_name" placeholder="Full Name" required><br>
+            <input name="email" type="email" placeholder="Email" required><br>
+            <input name="password" type="password" placeholder="Password" required><br>
+            <button type="submit">Sign Up</button>
+        </form>
+        '''
+
+
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
