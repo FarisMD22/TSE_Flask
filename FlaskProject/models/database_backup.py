@@ -1,8 +1,10 @@
 import mysql.connector
 from mysql.connector import Error
+from config import Config
 
 
-def create_database():
+def create_database()
+
     """Create database and tables with proper foreign key constraints"""
     print("🚀 Starting database setup...")
     print("=" * 60)
@@ -11,9 +13,9 @@ def create_database():
         # Connect to MySQL server (without specifying database)
         print("🔌 Connecting to MySQL server...")
         connection = mysql.connector.connect(
-            host='localhost',
-            user='root',
-            password='password'  # ⚠️ REPLACE WITH YOUR ACTUAL PASSWORD
+            host=Config.DB_HOST,
+            user=Config.DB_USER,
+            password=Config.DB_PASSWORD
         )
 
         cursor = connection.cursor()
@@ -21,12 +23,12 @@ def create_database():
 
         # Create database
         print("📁 Creating database...")
-        cursor.execute("DROP DATABASE IF EXISTS hostel_management")
-        cursor.execute("CREATE DATABASE hostel_management")
-        print("✅ Database 'hostel_management' created successfully!")
+        cursor.execute(f"DROP DATABASE IF EXISTS {Config.DB_NAME}")
+        cursor.execute(f"CREATE DATABASE {Config.DB_NAME}")
+        print(f"✅ Database '{Config.DB_NAME}' created successfully!")
 
         # Use the database
-        cursor.execute("USE hostel_management")
+        cursor.execute(f"USE {Config.DB_NAME}")
 
         # Create tables in the correct order (to handle foreign key constraints)
         tables = []
@@ -197,7 +199,7 @@ def create_database():
         print("🎉 DATABASE SETUP COMPLETED SUCCESSFULLY!")
         print("=" * 60)
         print("📊 Summary:")
-        print(f"   🗄️  Database: hostel_management")
+        print(f"   🗄️  Database: {Config.DB_NAME}")
         print(f"   📋 Tables: {len(tables_created)}")
         print(f"   👤 Admin user: admin / admin123")
         print(f"   🏠 Sample rooms: {len(basic_rooms)}")
