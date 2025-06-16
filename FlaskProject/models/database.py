@@ -1,13 +1,15 @@
 import mysql.connector
 from mysql.connector import Error
+from config import Config
 
 
 class Database:
     def __init__(self):
-        self.host = 'localhost'
-        self.user = 'root'
-        self.password = 'password'  # Replace with your actual password
-        self.database = 'hostel_management'
+        """Initialize database connection parameters from :class:`Config`."""
+        self.host = Config.DB_HOST
+        self.user = Config.DB_USER
+        self.password = Config.DB_PASSWORD
+        self.database = Config.DB_NAME
         self.connection = None
 
     def connect(self):

@@ -270,9 +270,16 @@ def signup():
         full_name = request.form.get('full_name','').strip()
         email = request.form.get('email','').strip()
         password = request.form.get('password','').strip()
+        role = request.form.get('role','Staff').title().strip()
+
+        allowed_roles = ['Admin','Staff','Warden']
 
         if not all([username,full_name,email,password]):
             flash('All fields are required','error')
+            return render_template('auth/register.html')
+
+        if role not in allowed_roles:
+            flash('Invalid role selection','error')
             return render_template('auth/register.html')
 
         password_hash = hashlib.sha256(password.encode()).hexdigest()
@@ -289,7 +296,7 @@ def signup():
                 user_id = db.execute_insert(
                     """INSERT INTO users (username,password,full_name,email,role,status)
                        VALUES (%s,%s,%s,%s,%s,%s)""",
-                    (username,password_hash,full_name,email,'User','Active'))
+                    (username,password_hash,full_name,email,role,'Active'))
                 if user_id:
                     flash('Account created, please sign in','success')
                     return redirect(url_for('login'))
@@ -310,6 +317,11 @@ def signup():
             <input name="full_name" placeholder="Full Name" required><br>
             <input name="email" type="email" placeholder="Email" required><br>
             <input name="password" type="password" placeholder="Password" required><br>
+            <select name="role" required>
+                <option value="Staff">Staff</option>
+                <option value="Admin">Admin</option>
+                <option value="Warden">Warden</option>
+            </select><br>
             <button type="submit">Sign Up</button>
         </form>
         '''
