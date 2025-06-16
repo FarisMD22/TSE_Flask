@@ -238,6 +238,9 @@ def login():
                                 <div class="mt-3 text-center">
                                     <small class="text-muted">Default: admin / admin123</small>
                                 </div>
+                                <div class="mt-2 text-center">
+                                    <a href="/signup">Don't have an account? Sign up</a>
+                                </div>
                                 <div class="mt-3">
                                     <h6>Available Roles:</h6>
                                     <small class="text-muted">
