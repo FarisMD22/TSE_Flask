@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4"><i class="fas fa-chart-line text-primary"></i> Payment Dashboard</h2>
+
+            <!-- Summary Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title">This Month Collection</h6>
+                                    <h3>RM {{ "%.2f"|format(summary.month_total) }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-money-bill-wave fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title">Outstanding Dues</h6>
+                                    <h3>RM {{ "%.2f"|format(summary.outstanding_dues) }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title">Students with Pending</h6>
+                                    <h3>{{ summary.pending_students }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-users fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title">Collection Rate</h6>
+                                    <h3>{{ "%.1f"|format((summary.month_total / (summary.month_total + summary.outstanding_dues) * 100) if (summary.month_total + summary.outstanding_dues) > 0 else 0) }}%</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-percentage fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Methods Chart -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-pie"></i> Payment Methods (This Month)</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if summary.payment_methods %}
+                            <canvas id="paymentMethodsChart"></canvas>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No payment data for this month</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-list"></i> Quick Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('payments.add_payment') }}" class="btn btn-success">
+                                    <i class="fas fa-plus"></i> Record New Payment
+                                </a>
+                                <a href="{{ url_for('payments.outstanding_dues') }}" class="btn btn-warning">
+                                    <i class="fas fa-exclamation-triangle"></i> View Outstanding Dues
+                                </a>
+                                <a href="{{ url_for('payments.payment_list') }}" class="btn btn-info">
+                                    <i class="fas fa-list"></i> All Payment Records
+                                </a>
+                                <button class="btn btn-primary" onclick="generateReport()">
+                                    <i class="fas fa-file-pdf"></i> Generate Monthly Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+{% if summary.payment_methods %}
+// Payment Methods Chart
+const ctx = document.getElementById('paymentMethodsChart').getContext('2d');
+const paymentMethodsChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: [{% for method in summary.payment_methods %}'{{ method[0] }}'{% if not loop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for method in summary.payment_methods %}{{ method[2] }}{% if not loop.last %},{% endif %}{% endfor %}],
+            backgroundColor: [
+                '#FF6384',
+                '#36A2EB',
+                '#FFCE56',
+                '#4BC0C0',
+                '#9966FF'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+{% endif %}
+
+function generateReport() {
+    // Placeholder for report generation
+    alert('Report generation feature coming soon!');
+}
+</script>
+{% endblock %}

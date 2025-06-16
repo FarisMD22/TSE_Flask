@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Room {{ room[1] }} - Hostel Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2><i class="fas fa-edit"></i> Edit Room</h2>
+                <p class="text-muted mb-0">
+                    <strong>Room {{ room[1] }}</strong> - {{ room[2] }} (Floor {{ room[5] }})
+                </p>
+            </div>
+            <div>
+                <a href="{{ url_for('rooms.view_room', room_id=room[0]) }}" class="btn btn-outline-info me-2">
+                    <i class="fas fa-eye"></i> View Room
+                </a>
+                <a href="{{ url_for('rooms.list_rooms') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to List
+                </a>
+            </div>
+        </div>
+
+        <!-- Form Card -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-bed"></i> Update Room Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="editRoomForm">
+                    <div class="row">
+                        <!-- Basic Information Column -->
+                        <div class="col-md-6">
+                            <div class="border-end pe-4">
+                                <h6 class="text-primary mb-3 pb-2 border-bottom">
+                                    <i class="fas fa-info-circle"></i> Basic Information
+                                </h6>
+
+                                <div class="mb-3">
+                                    <label for="room_number" class="form-label">
+                                        <i class="fas fa-door-closed text-primary"></i> Room Number <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="room_number"
+                                           name="room_number" value="{{ room[1] }}" required>
+                                    <div class="form-text">Unique identifier for the room</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="room_type" class="form-label">
+                                        <i class="fas fa-home text-primary"></i> Room Type <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="room_type" name="room_type" required>
+                                        <option value="">Select Room Type</option>
+                                        <option value="Single" {% if room[2] == 'Single' %}selected{% endif %}>Single Room (1 person)</option>
+                                        <option value="Double" {% if room[2] == 'Double' %}selected{% endif %}>Double Room (2 persons)</option>
+                                        <option value="Triple" {% if room[2] == 'Triple' %}selected{% endif %}>Triple Room (3 persons)</option>
+                                        <option value="Quad" {% if room[2] == 'Quad' %}selected{% endif %}>Quad Room (4 persons)</option>
+                                    </select>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="capacity" class="form-label">
+                                                <i class="fas fa-users text-primary"></i> Capacity <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="number" class="form-control" id="capacity"
+                                                   name="capacity" min="1" max="10" value="{{ room[3] }}" required>
+                                            <div class="form-text">Max persons allowed</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="floor_number" class="form-label">
+                                                <i class="fas fa-layer-group text-primary"></i> Floor Number <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="number" class="form-control" id="floor_number"
+                                                   name="floor_number" min="1" max="50" value="{{ room[5] }}" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Current Occupancy Info -->
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-chart-bar text-info"></i> Current Occupancy
+                                    </label>
+                                    <div class="p-3 bg-light rounded">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span><strong>{{ room[4] }}</strong> of <strong>{{ room[3] }}</strong> occupied</span>
+                                            <div class="progress" style="width: 100px; height: 20px;">
+                                                {% set occupancy_percent = (room[4] / room[3] * 100) if room[3] > 0 else 0 %}
+                                                <div class="progress-bar
+                                                    {% if occupancy_percent == 100 %}bg-danger
+                                                    {% elif occupancy_percent >= 80 %}bg-warning
+                                                    {% elif occupancy_percent > 0 %}bg-success
+                                                    {% else %}bg-light{% endif %}"
+                                                    style="width: {{ occupancy_percent }}%">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle"></i>
+                                            {% if room[4] > 0 %}
+                                                Cannot reduce capacity below current occupancy
+                                            {% else %}
+                                                Room is currently empty
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Financial & Status Information Column -->
+                        <div class="col-md-6">
+                            <div class="ps-4">
+                                <h6 class="text-success mb-3 pb-2 border-bottom">
+                                    <i class="fas fa-dollar-sign"></i> Financial Information
+                                </h6>
+
+                                <div class="mb-3">
+                                    <label for="rent_amount" class="form-label">
+                                        <i class="fas fa-money-bill-wave text-success"></i> Monthly Rent <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="rent_amount"
+                                               name="rent_amount" min="0" step="0.01" value="{{ room[6] }}" required>
+                                    </div>
+                                    <div class="form-text">Monthly rent amount in USD</div>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <h6 class="text-warning mb-3 pb-2 border-bottom">
+                                    <i class="fas fa-cog"></i> Room Status
+                                </h6>
+
+                                <div class="mb-3">
+                                    <label for="status" class="form-label">
+                                        <i class="fas fa-info-circle text-warning"></i> Room Status <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="status" name="status" required>
+                                        <option value="Available" {% if room[7] == 'Available' %}selected{% endif %}>Available</option>
+                                        <option value="Occupied" {% if room[7] == 'Occupied' %}selected{% endif %}>Occupied</option>
+                                        <option value="Maintenance" {% if room[7] == 'Maintenance' %}selected{% endif %}>Maintenance</option>
+                                        <option value="Reserved" {% if room[7] == 'Reserved' %}selected{% endif %}>Reserved</option>
+                                    </select>
+                                    <div class="form-text">
+                                        {% if room[4] > 0 %}
+                                            <i class="fas fa-warning text-warning"></i> Room has occupants - status changes may affect residents
+                                        {% else %}
+                                            Current status can be changed freely
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Status Guidelines -->
+                                <div class="mt-4 p-3 bg-light rounded">
+                                    <h6 class="text-info mb-2">
+                                        <i class="fas fa-lightbulb"></i> Status Guidelines
+                                    </h6>
+                                    <small class="text-muted">
+                                        <strong>Available:</strong> Ready for new assignments<br>
+                                        <strong>Occupied:</strong> Currently has residents<br>
+                                        <strong>Maintenance:</strong> Under repair/cleaning<br>
+                                        <strong>Reserved:</strong> Temporarily unavailable
+                                    </small>
+                                </div>
+
+                                <!-- System Information -->
+                                <div class="mt-4 p-3 bg-light rounded">
+                                    <h6 class="text-secondary mb-2">
+                                        <i class="fas fa-database"></i> System Information
+                                    </h6>
+                                    <small class="text-muted">
+                                        <strong>Room ID:</strong> {{ room[0] }}<br>
+                                        <strong>Created:</strong> {{ room[8] if room[8] else 'Not available' }}<br>
+                                        <strong>Last Modified:</strong> <span id="lastModified">Just now</span>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="border-top pt-4">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle"></i>
+                                            All fields marked with <span class="text-danger">*</span> are required
+                                        </small>
+                                    </div>
+                                    <div>
+                                        <a href="{{ url_for('rooms.view_room', room_id=room[0]) }}" class="btn btn-outline-info me-2">
+                                            <i class="fas fa-eye"></i> View Room
+                                        </a>
+                                        <a href="{{ url_for('rooms.list_rooms') }}" class="btn btn-outline-secondary me-2">
+                                            <i class="fas fa-times"></i> Cancel
+                                        </a>
+                                        <button type="submit" class="btn btn-warning">
+                                            <i class="fas fa-save"></i> Update Room
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Warning Card for Occupied Rooms -->
+        {% if room[4] > 0 %}
+        <div class="card mt-4 border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Important Notice</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <p class="mb-2">
+                            <strong>This room currently has {{ room[4] }} occupant(s).</strong>
+                        </p>
+                        <p class="mb-0 text-muted">
+                            • Reducing capacity below current occupancy is not allowed<br>
+                            • Status changes may affect current residents<br>
+                            • Consider notifying residents of any changes
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <a href="{{ url_for('rooms.view_room', room_id=room[0]) }}#residents" class="btn btn-outline-warning">
+                            <i class="fas fa-users"></i> View Residents
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Help Card -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6 class="text-primary mb-3"><i class="fas fa-question-circle"></i> Need Help?</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <small>
+                            <strong>Capacity Changes:</strong> You can only increase capacity if the room is empty, or decrease it if new capacity is still above current occupancy.
+                        </small>
+                    </div>
+                    <div class="col-md-6">
+                        <small>
+                            <strong>Status Changes:</strong> Changing status to "Maintenance" will prevent new assignments but won't affect current residents.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.getElementById('editRoomForm');
+    const capacityInput = document.getElementById('capacity');
+    const currentOccupancy = {{ room[4] }};
+
+    form.addEventListener('submit', function(event) {
+        // Check if capacity is being reduced below current occupancy
+        if (parseInt(capacityInput.value) < currentOccupancy) {
+            event.preventDefault();
+            alert(`Cannot reduce capacity below current occupancy (${currentOccupancy} students)`);
+            capacityInput.focus();
+            return false;
+        }
+
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+
+    // Capacity validation
+    capacityInput.addEventListener('change', function() {
+        if (parseInt(this.value) < currentOccupancy) {
+            this.setCustomValidity(`Capacity cannot be less than current occupancy (${currentOccupancy})`);
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+
+    // Auto-update capacity based on room type
+    const roomTypeSelect = document.getElementById('room_type');
+    roomTypeSelect.addEventListener('change', function() {
+        const roomType = this.value;
+        let suggestedCapacity;
+
+        switch(roomType) {
+            case 'Single':
+                suggestedCapacity = 1;
+                break;
+            case 'Double':
+                suggestedCapacity = 2;
+                break;
+            case 'Triple':
+                suggestedCapacity = 3;
+                break;
+            case 'Quad':
+                suggestedCapacity = 4;
+                break;
+            default:
+                return;
+        }
+
+        // Only suggest if it's not below current occupancy
+        if (suggestedCapacity >= currentOccupancy) {
+            if (confirm(`Update capacity to ${suggestedCapacity} to match room type?`)) {
+                capacityInput.value = suggestedCapacity;
+                capacityInput.dispatchEvent(new Event('change'));
+            }
+        }
+    });
+
+    // Update last modified time
+    document.getElementById('lastModified').textContent = new Date().toLocaleString();
+});
+</script>
+{% endblock %}

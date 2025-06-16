@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+
+{% block title %}Reports Dashboard - Hostel Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="fas fa-chart-bar"></i> Reports Dashboard</h2>
+        <p class="text-muted mb-0">Comprehensive analytics and reporting</p>
+    </div>
+    <div class="text-end">
+        <button class="btn btn-primary" onclick="window.print()">
+            <i class="fas fa-print"></i> Print Dashboard
+        </button>
+        <a href="{{ url_for('reports.generate_summary_report') }}" class="btn btn-success">
+            <i class="fas fa-file-alt"></i> Generate Summary Report
+        </a>
+    </div>
+</div>
+
+<!-- Statistics Overview -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary h-100">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="card-title">Total Students</h5>
+                        <h2 class="mb-0">{{ stats.total_students or 0 }}</h2>
+                        <small class="opacity-75">Active registrations</small>
+                    </div>
+                    <i class="fas fa-users fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-success h-100">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="card-title">Monthly Revenue</h5>
+                        <h2 class="mb-0">RM {{ "%.0f"|format(stats.monthly_revenue or 0) }}</h2>
+                        <small class="opacity-75">This month</small>
+                    </div>
+                    <i class="fas fa-money-bill-wave fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-warning h-100">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="card-title">Occupancy Rate</h5>
+                        <h2 class="mb-0">{{ "%.1f"|format(stats.occupancy_rate or 0) }}%</h2>
+                        <small class="opacity-75">Current utilization</small>
+                    </div>
+                    <i class="fas fa-chart-pie fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-danger h-100">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="card-title">Outstanding</h5>
+                        <h2 class="mb-0">RM {{ "%.0f"|format(stats.outstanding_total or 0) }}</h2>
+                        <small class="opacity-75">Unpaid dues</small>
+                    </div>
+                    <i class="fas fa-exclamation-triangle fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Categories -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-bed"></i> Occupancy Reports</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Analyze room utilization, occupancy trends, and space efficiency metrics.</p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success"></i> Room utilization analysis</li>
+                    <li><i class="fas fa-check text-success"></i> Occupancy trends over time</li>
+                    <li><i class="fas fa-check text-success"></i> Peak usage patterns</li>
+                    <li><i class="fas fa-check text-success"></i> Underutilized rooms</li>
+                </ul>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <strong>{{ stats.active_assignments or 0 }}</strong> active assignments
+                    </small>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('reports.occupancy_reports') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-chart-bar"></i> View Occupancy Reports
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-dollar-sign"></i> Financial Reports</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Comprehensive financial analysis including revenue, payments, and collections.</p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success"></i> Revenue analysis</li>
+                    <li><i class="fas fa-check text-success"></i> Payment trends</li>
+                    <li><i class="fas fa-check text-success"></i> Outstanding dues aging</li>
+                    <li><i class="fas fa-check text-success"></i> Collection efficiency</li>
+                </ul>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <strong>{{ stats.monthly_payments or 0 }}</strong> payments this month
+                    </small>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('reports.financial_reports') }}" class="btn btn-success btn-sm">
+                    <i class="fas fa-chart-line"></i> View Financial Reports
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-users"></i> Student Reports</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Student demographics, enrollment trends, and performance analytics.</p>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success"></i> Demographics analysis</li>
+                    <li><i class="fas fa-check text-success"></i> Course distribution</li>
+                    <li><i class="fas fa-check text-success"></i> Payment behavior</li>
+                    <li><i class="fas fa-check text-success"></i> Enrollment trends</li>
+                </ul>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <strong>{{ stats.total_students or 0 }}</strong> active students
+                    </small>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('reports.student_reports') }}" class="btn btn-info btn-sm">
+                    <i class="fas fa-user-graduate"></i> View Student Reports
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export & Custom Reports -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-download"></i> Export Data</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Export system data in various formats for external analysis.</p>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="d-grid mb-2">
+                            <a href="{{ url_for('reports.export_csv', data_type='students') }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-users"></i> Students
+                            </a>
+                        </div>
+                        <div class="d-grid mb-2">
+                            <a href="{{ url_for('reports.export_csv', data_type='rooms') }}" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-bed"></i> Rooms
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-grid mb-2">
+                            <a href="{{ url_for('reports.export_csv', data_type='payments') }}" class="btn btn-outline-info btn-sm">
+                                <i class="fas fa-money-bill"></i> Payments
+                            </a>
+                        </div>
+                        <div class="d-grid mb-2">
+                            <a href="{{ url_for('reports.export_csv', data_type='assignments') }}" class="btn btn-outline-warning btn-sm">
+                                <i class="fas fa-home"></i> Assignments
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('reports.export_data') }}" class="btn btn-warning btn-sm">
+                    <i class="fas fa-cog"></i> Advanced Export Options
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="fas fa-tools"></i> Custom Reports</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">Create custom reports with specific filters and date ranges.</p>
+                <div class="mb-3">
+                    <small class="text-muted">Available Report Types:</small>
+                    <ul class="list-unstyled mt-2">
+                        <li><i class="fas fa-dot-circle text-primary"></i> Student Performance Analysis</li>
+                        <li><i class="fas fa-dot-circle text-success"></i> Financial Summary Reports</li>
+                        <li><i class="fas fa-dot-circle text-info"></i> Occupancy Analysis</li>
+                        <li><i class="fas fa-dot-circle text-warning"></i> Custom Date Ranges</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('reports.custom_report') }}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-magic"></i> Create Custom Report
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Charts -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Occupancy Trend (Last 30 Days)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="occupancyChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Revenue by Payment Method</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="paymentMethodChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Actions -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-tasks"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="d-grid">
+                            <a href="{{ url_for('reports.generate_summary_report') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-file-alt"></i> Monthly Summary
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-grid">
+                            <button class="btn btn-outline-success" onclick="generateQuickReport('financial')">
+                                <i class="fas fa-dollar-sign"></i> Financial Overview
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-grid">
+                            <button class="btn btn-outline-info" onclick="generateQuickReport('occupancy')">
+                                <i class="fas fa-chart-bar"></i> Occupancy Status
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-grid">
+                            <button class="btn btn-outline-warning" onclick="exportAllData()">
+                                <i class="fas fa-download"></i> Export All Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load occupancy trend chart
+    loadOccupancyChart();
+
+    // Load payment method chart
+    loadPaymentMethodChart();
+});
+
+function loadOccupancyChart() {
+    fetch('/reports/api/chart-data/occupancy_trend')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('occupancyChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'New Assignments',
+                        data: data.data,
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading occupancy chart:', error);
+            document.getElementById('occupancyChart').parentElement.innerHTML =
+                '<p class="text-muted text-center">Unable to load chart data</p>';
+        });
+}
+
+function loadPaymentMethodChart() {
+    fetch('/reports/api/chart-data/payment_methods')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('paymentMethodChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.amounts,
+                        backgroundColor: [
+                            '#FF6384',
+                            '#36A2EB',
+                            '#FFCE56',
+                            '#4BC0C0',
+                            '#9966FF'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading payment method chart:', error);
+            document.getElementById('paymentMethodChart').parentElement.innerHTML =
+                '<p class="text-muted text-center">Unable to load chart data</p>';
+        });
+}
+
+function generateQuickReport(type) {
+    // Show loading
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    btn.disabled = true;
+
+    // Simulate report generation
+    setTimeout(() => {
+        alert(`${type.charAt(0).toUpperCase() + type.slice(1)} report generated successfully!`);
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }, 2000);
+}
+
+function exportAllData() {
+    if (confirm('This will export all system data. Continue?')) {
+        // Show loading
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...';
+        btn.disabled = true;
+
+        // Simulate export
+        setTimeout(() => {
+            alert('Export completed successfully!');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }, 3000);
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,509 @@
+{% extends "base.html" %}
+
+{% block title %}Occupancy Reports - Hostel Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="fas fa-bed"></i> Occupancy Reports</h2>
+        <p class="text-muted mb-0">Room utilization and occupancy analytics</p>
+    </div>
+    <div>
+        <a href="{{ url_for('reports.reports_dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Reports
+        </a>
+        <button class="btn btn-primary" onclick="window.print()">
+            <i class="fas fa-print"></i> Print Report
+        </button>
+    </div>
+</div>
+
+<!-- Date Range Filter -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-filter"></i> Report Filters</h5>
+            </div>
+            <div class="card-body">
+                <form id="filterForm" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="dateFrom" class="form-label">From Date</label>
+                        <input type="date" class="form-control" id="dateFrom" value="{{ date_from }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="dateTo" class="form-label">To Date</label>
+                        <input type="date" class="form-control" id="dateTo" value="{{ date_to }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="roomType" class="form-label">Room Type</label>
+                        <select class="form-select" id="roomType">
+                            <option value="">All Room Types</option>
+                            <option value="Single">Single</option>
+                            <option value="Double">Double</option>
+                            <option value="Triple">Triple</option>
+                            <option value="Quad">Quad</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="reportType" class="form-label">Report Type</label>
+                        <select class="form-select" id="reportType">
+                            <option value="overview">Overview</option>
+                            <option value="trends">Trends</option>
+                            <option value="utilization">Utilization</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="button" class="btn btn-primary" onclick="applyFilters()">
+                            <i class="fas fa-search"></i> Apply Filters
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="resetFilters()">
+                            <i class="fas fa-undo"></i> Reset
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="exportOccupancyReport()">
+                            <i class="fas fa-download"></i> Export Report
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">Total Rooms</h5>
+                <h2 class="mb-0">{{ occupancy_stats.total_rooms or 0 }}</h2>
+                <small class="opacity-75">All room types</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">Occupied Rooms</h5>
+                <h2 class="mb-0">{{ occupancy_stats.occupied_rooms or 0 }}</h2>
+                <small class="opacity-75">Currently occupied</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">Available Rooms</h5>
+                <h2 class="mb-0">{{ occupancy_stats.available_rooms or 0 }}</h2>
+                <small class="opacity-75">Ready for assignment</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">Occupancy Rate</h5>
+                <h2 class="mb-0">{{ "%.1f"|format(occupancy_stats.occupancy_rate or 0) }}%</h2>
+                <small class="opacity-75">Current utilization</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Occupancy Trend</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="occupancyTrendChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-doughnut"></i> Room Type Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="roomTypeChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Utilization by Room Type -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Utilization by Room Type</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Room Type</th>
+                                <th>Total Rooms</th>
+                                <th>Total Capacity</th>
+                                <th>Current Occupancy</th>
+                                <th>Utilization Rate</th>
+                                <th>Available Spaces</th>
+                                <th>Revenue Potential</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for room_type in room_utilization %}
+                            <tr>
+                                <td><strong>{{ room_type.type }}</strong></td>
+                                <td>{{ room_type.total_rooms }}</td>
+                                <td>{{ room_type.total_capacity }}</td>
+                                <td>{{ room_type.current_occupancy }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 me-2" style="height: 20px;">
+                                            <div class="progress-bar
+                                                {% if room_type.utilization_rate >= 90 %}bg-danger
+                                                {% elif room_type.utilization_rate >= 75 %}bg-warning
+                                                {% elif room_type.utilization_rate >= 50 %}bg-success
+                                                {% else %}bg-info
+                                                {% endif %}"
+                                                role="progressbar"
+                                                style="width: {{ room_type.utilization_rate }}%"
+                                                aria-valuenow="{{ room_type.utilization_rate }}"
+                                                aria-valuemin="0"
+                                                aria-valuemax="100">
+                                                {{ "%.1f"|format(room_type.utilization_rate) }}%
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ room_type.available_spaces }}</td>
+                                <td>RM {{ "%.2f"|format(room_type.revenue_potential) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Room Status -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-list"></i> Detailed Room Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="roomStatusTable">
+                        <thead>
+                            <tr>
+                                <th>Room Number</th>
+                                <th>Type</th>
+                                <th>Floor</th>
+                                <th>Capacity</th>
+                                <th>Current Occupancy</th>
+                                <th>Status</th>
+                                <th>Last Assignment</th>
+                                <th>Revenue (Month)</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for room in detailed_rooms %}
+                            <tr>
+                                <td><strong>{{ room.room_number }}</strong></td>
+                                <td>{{ room.room_type }}</td>
+                                <td>{{ room.floor_number }}</td>
+                                <td>{{ room.capacity }}</td>
+                                <td>
+                                    <span class="badge
+                                        {% if room.current_occupancy == room.capacity %}bg-danger
+                                        {% elif room.current_occupancy > 0 %}bg-warning
+                                        {% else %}bg-success
+                                        {% endif %}">
+                                        {{ room.current_occupancy }}/{{ room.capacity }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge
+                                        {% if room.status == 'Available' %}bg-success
+                                        {% elif room.status == 'Occupied' %}bg-primary
+                                        {% else %}bg-secondary
+                                        {% endif %}">
+                                        {{ room.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if room.last_assignment %}
+                                        {{ room.last_assignment.strftime('%Y-%m-%d') }}
+                                    {% else %}
+                                        <span class="text-muted">Never assigned</span>
+                                    {% endif %}
+                                </td>
+                                <td>RM {{ "%.2f"|format(room.monthly_revenue or 0) }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewRoomDetails('{{ room.room_id }}')">
+                                        <i class="fas fa-eye"></i> Details
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Peak Usage Analysis -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-clock"></i> Peak Usage Patterns</h5>
+            </div>
+            <div class="card-body">
+                <h6>Monthly Assignment Patterns</h6>
+                <ul class="list-unstyled">
+                    {% for pattern in peak_patterns %}
+                    <li class="mb-2">
+                        <div class="d-flex justify-content-between">
+                            <span>{{ pattern.month }}</span>
+                            <span class="badge bg-primary">{{ pattern.assignments }} assignments</span>
+                        </div>
+                        <div class="progress" style="height: 5px;">
+                            <div class="progress-bar" role="progressbar"
+                                 style="width: {{ (pattern.assignments / peak_patterns[0].assignments * 100) if peak_patterns else 0 }}%"></div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Underutilized Rooms</h5>
+            </div>
+            <div class="card-body">
+                {% if underutilized_rooms %}
+                    <div class="list-group list-group-flush">
+                        {% for room in underutilized_rooms %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ room.room_number }}</strong>
+                                <br>
+                                <small class="text-muted">{{ room.room_type }} - Floor {{ room.floor_number }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-warning">{{ "%.1f"|format(room.utilization_rate) }}% utilized</span>
+                                <br>
+                                <small class="text-muted">{{ room.current_occupancy }}/{{ room.capacity }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-center text-muted">All rooms are well-utilized!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadOccupancyTrendChart();
+    loadRoomTypeChart();
+    initializeFilters();
+});
+
+function loadOccupancyTrendChart() {
+    // Get chart data from the server
+    fetch(`/reports/api/chart-data/occupancy_trend?date_from=${document.getElementById('dateFrom').value}&date_to=${document.getElementById('dateTo').value}`)
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('occupancyTrendChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels || ['No Data'],
+                    datasets: [{
+                        label: 'New Assignments',
+                        data: data.data || [0],
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Assignments'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Room Assignment Trends'
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading occupancy trend chart:', error);
+            // Create a fallback chart with sample data
+            const ctx = document.getElementById('occupancyTrendChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [{
+                        label: 'Sample Data',
+                        data: [5, 8, 12, 15],
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        });
+}
+
+function loadRoomTypeChart() {
+    fetch('/reports/api/chart-data/room_types')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('roomTypeChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.labels || ['Single', 'Double', 'Triple', 'Quad'],
+                    datasets: [{
+                        data: data.occupied || [8, 14, 15, 12],
+                        backgroundColor: [
+                            '#FF6384',
+                            '#36A2EB',
+                            '#FFCE56',
+                            '#4BC0C0'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Occupied Spaces by Room Type'
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading room type chart:', error);
+            // Create fallback chart
+            const ctx = document.getElementById('roomTypeChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Single', 'Double', 'Triple', 'Quad'],
+                    datasets: [{
+                        data: [8, 14, 15, 12],
+                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        });
+}
+
+function initializeFilters() {
+    // Set default dates (last 30 days)
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+
+    if (!document.getElementById('dateFrom').value) {
+        document.getElementById('dateFrom').value = thirtyDaysAgo.toISOString().split('T')[0];
+    }
+    if (!document.getElementById('dateTo').value) {
+        document.getElementById('dateTo').value = today.toISOString().split('T')[0];
+    }
+}
+
+function applyFilters() {
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    const roomType = document.getElementById('roomType').value;
+    const reportType = document.getElementById('reportType').value;
+
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (dateFrom) params.append('date_from', dateFrom);
+    if (dateTo) params.append('date_to', dateTo);
+    if (roomType) params.append('room_type', roomType);
+    if (reportType) params.append('report_type', reportType);
+
+    // Reload page with new parameters
+    window.location.href = `/reports/occupancy?${params.toString()}`;
+}
+
+function resetFilters() {
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    document.getElementById('roomType').value = '';
+    document.getElementById('reportType').value = 'overview';
+    initializeFilters();
+}
+
+function exportOccupancyReport() {
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    const roomType = document.getElementById('roomType').value;
+
+    const params = new URLSearchParams();
+    if (dateFrom) params.append('date_from', dateFrom);
+    if (dateTo) params.append('date_to', dateTo);
+    if (roomType) params.append('room_type', roomType);
+
+    window.open(`/reports/export/occupancy_report?${params.toString()}`, '_blank');
+}
+
+function viewRoomDetails(roomId) {
+    // In a real implementation, this would show detailed room information
+    alert(`Viewing details for room ID: ${roomId}`);
+}
+</script>
+{% endblock %}

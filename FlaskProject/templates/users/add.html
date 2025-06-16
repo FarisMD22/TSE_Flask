@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}Add User - Hostel Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="fas fa-user-plus"></i> Add New User</h2>
+        <p class="text-muted mb-0">Create a new system user account</p>
+    </div>
+    <a href="{{ url_for('users.list_users') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Users
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-user-circle"></i> User Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="addUserForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">
+                                    <i class="fas fa-user"></i> Username <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="username" name="username"
+                                       required minlength="3" maxlength="50"
+                                       pattern="[a-zA-Z0-9_]+"
+                                       title="Username can only contain letters, numbers, and underscores">
+                                <div class="form-text">3-50 characters, letters, numbers, and underscores only</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="full_name" class="form-label">
+                                    <i class="fas fa-id-card"></i> Full Name <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="full_name" name="full_name"
+                                       required maxlength="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">
+                                    <i class="fas fa-envelope"></i> Email Address <span class="text-danger">*</span>
+                                </label>
+                                <input type="email" class="form-control" id="email" name="email"
+                                       required maxlength="100">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="password" class="form-label">
+                                    <i class="fas fa-lock"></i> Password <span class="text-danger">*</span>
+                                </label>
+                                <input type="password" class="form-control" id="password" name="password"
+                                       required minlength="6">
+                                <div class="form-text">Minimum 6 characters</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="role" class="form-label">
+                                    <i class="fas fa-shield-alt"></i> Role <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" id="role" name="role" required>
+                                    {% for role_name, role_info in roles.items() %}
+                                    <option value="{{ role_name }}"
+                                            {% if role_name == 'Read Only' %}selected{% endif %}>
+                                        {{ role_name }} - {{ role_info.description }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="status" class="form-label">
+                                    <i class="fas fa-toggle-on"></i> Status
+                                </label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="Active" selected>Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="send_welcome" name="send_welcome">
+                            <label class="form-check-label" for="send_welcome">
+                                Send welcome email with login credentials (if email is configured)
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-secondary me-md-2" onclick="history.back()">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Create User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Role Information Card -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-info-circle"></i> Role Permissions</h6>
+            </div>
+            <div class="card-body" id="rolePermissions">
+                <p class="text-muted">Select a role to see permissions</p>
+            </div>
+        </div>
+
+        <!-- Password Requirements -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-shield-alt"></i> Security Requirements</h6>
+            </div>
+            <div class="card-body">
+                <small class="text-muted">
+                    <ul class="mb-0">
+                        <li>Password must be at least 6 characters</li>
+                        <li>Username must be unique</li>
+                        <li>Email must be unique and valid</li>
+                        <li>All required fields must be filled</li>
+                    </ul>
+                </small>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="generatePassword()">
+                        <i class="fas fa-key"></i> Generate Password
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-info" onclick="previewUser()">
+                        <i class="fas fa-eye"></i> Preview User
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">User Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="previewContent">
+                <!-- Preview content will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Role permissions mapping
+const rolePermissions = {
+    {% for role_name, role_info in roles.items() %}
+    "{{ role_name }}": {
+        description: "{{ role_info.description }}",
+        permissions: {{ role_info.permissions | tojson }}
+    },
+    {% endfor %}
+};
+
+// Update role permissions display
+document.getElementById('role').addEventListener('change', function() {
+    const selectedRole = this.value;
+    const permissionsDiv = document.getElementById('rolePermissions');
+
+    if (rolePermissions[selectedRole]) {
+        const role = rolePermissions[selectedRole];
+        let html = `<h6 class="text-primary">${selectedRole}</h6>`;
+        html += `<p class="text-muted">${role.description}</p>`;
+        html += `<h6>Permissions:</h6>`;
+
+        if (role.permissions.includes('all')) {
+            html += `<span class="badge bg-success">All System Permissions</span>`;
+        } else {
+            html += `<div class="d-flex flex-wrap gap-1">`;
+            role.permissions.forEach(perm => {
+                html += `<span class="badge bg-primary">${perm.replace('_', ' ')}</span>`;
+            });
+            html += `</div>`;
+        }
+
+        permissionsDiv.innerHTML = html;
+    }
+});
+
+// Generate password function
+function generatePassword() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
+    let password = '';
+    for (let i = 0; i < 12; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    document.getElementById('password').value = password;
+
+    // Show password briefly
+    const passwordField = document.getElementById('password');
+    const originalType = passwordField.type;
+    passwordField.type = 'text';
+    setTimeout(() => {
+        passwordField.type = originalType;
+    }, 3000);
+}
+
+// Preview user function
+function previewUser() {
+    const form = document.getElementById('addUserForm');
+    const formData = new FormData(form);
+
+    let html = '<div class="user-preview">';
+    html += `<div class="d-flex align-items-center mb-3">`;
+    html += `<div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">`;
+    html += `${formData.get('full_name').charAt(0).toUpperCase()}`;
+    html += `</div>`;
+    html += `<div>`;
+    html += `<h6 class="mb-0">${formData.get('full_name')}</h6>`;
+    html += `<small class="text-muted">@${formData.get('username')}</small>`;
+    html += `</div>`;
+    html += `</div>`;
+
+    html += `<table class="table table-sm">`;
+    html += `<tr><td><strong>Email:</strong></td><td>${formData.get('email')}</td></tr>`;
+    html += `<tr><td><strong>Role:</strong></td><td><span class="badge bg-primary">${formData.get('role')}</span></td></tr>`;
+    html += `<tr><td><strong>Status:</strong></td><td><span class="badge bg-${formData.get('status') === 'Active' ? 'success' : 'warning'}">${formData.get('status')}</span></td></tr>`;
+    html += `</table>`;
+    html += `</div>`;
+
+    document.getElementById('previewContent').innerHTML = html;
+
+    const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+    modal.show();
+}
+
+// Form validation
+document.getElementById('addUserForm').addEventListener('submit', function(e) {
+    const password = document.getElementById('password').value;
+    const username = document.getElementById('username').value;
+
+    if (password.length < 6) {
+        e.preventDefault();
+        alert('Password must be at least 6 characters long.');
+        return;
+    }
+
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+        e.preventDefault();
+        alert('Username can only contain letters, numbers, and underscores.');
+        return;
+    }
+});
+
+// Initialize role permissions display
+document.getElementById('role').dispatchEvent(new Event('change'));
+</script>
+{% endblock %}

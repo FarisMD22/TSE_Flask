@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+
+{% block title %}Transfer Student - Hostel Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2><i class="fas fa-exchange-alt"></i> Transfer Student</h2>
+                <p class="text-muted mb-0">Move student to a different room</p>
+            </div>
+            <a href="{{ url_for('assignments.list_assignments') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Assignments
+            </a>
+        </div>
+
+        <!-- Current Assignment Info -->
+        <div class="card mb-4 border-info">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Current Assignment</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3"
+                                 style="width: 50px; height: 50px; font-size: 18px;">
+                                {{ assignment[5][0] }}{{ assignment[6][0] }}
+                            </div>
+                            <div>
+                                <h5 class="mb-0">{{ assignment[5] }} {{ assignment[6] }}</h5>
+                                <small class="text-muted">{{ assignment[4] }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-end">
+                            <h5 class="text-primary mb-0">
+                                <i class="fas fa-bed"></i> Current: Room {{ assignment[7] }}
+                            </h5>
+                            <small class="text-muted">
+                                {{ assignment[8] }} Room | Assigned: {{ assignment[3] }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if not available_rooms %}
+        <!-- No Available Rooms Warning -->
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0"><i class="fas fa-exclamation-triangle"></i> No Available Rooms</h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">All other rooms are currently at full capacity. Cannot transfer student at this time.</p>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('rooms.add_room') }}" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Add New Room
+                    </a>
+                    <a href="{{ url_for('assignments.list_assignments') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-list"></i> Back to Assignments
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- Transfer Form -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-exchange-alt"></i> Room Transfer Form</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="transferForm">
+                    <div class="row">
+                        <!-- Current Room Info -->
+                        <div class="col-md-6">
+                            <div class="border-end pe-4">
+                                <h6 class="text-danger mb-3 pb-2 border-bottom">
+                                    <i class="fas fa-sign-out-alt"></i> Moving From
+                                </h6>
+
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <div class="text-center">
+                                            <i class="fas fa-bed fa-3x text-danger mb-3"></i>
+                                            <h4 class="text-danger">Room {{ assignment[7] }}</h4>
+                                            <p class="mb-2">
+                                                <span class="badge bg-secondary">{{ assignment[8] }}</span>
+                                            </p>
+                                            <small class="text-muted">
+                                                Assigned: {{ assignment[3] }}<br>
+                                                Student will be checked out from this room
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3">
+                                    <label for="transfer_date" class="form-label">
+                                        <i class="fas fa-calendar text-danger"></i> Transfer Date <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="date" class="form-control" id="transfer_date"
+                                           name="transfer_date" value="{{ date.today() }}" required>
+                                    <div class="form-text">Date when the student will move to the new room</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- New Room Selection -->
+                        <div class="col-md-6">
+                            <div class="ps-4">
+                                <h6 class="text-success mb-3 pb-2 border-bottom">
+                                    <i class="fas fa-sign-in-alt"></i> Moving To
+                                </h6>
+
+                                <div class="mb-3">
+                                    <label for="new_room_id" class="form-label">
+                                        <i class="fas fa-door-open text-success"></i> New Room <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="new_room_id" name="new_room_id" required>
+                                        <option value="">Select new room...</option>
+                                        {% for room in available_rooms %}
+                                        <option value="{{ room[0] }}"
+                                                data-type="{{ room[2] }}"
+                                                data-capacity="{{ room[3] }}"
+                                                data-occupancy="{{ room[4] }}"
+                                                data-rent="{{ room[5] }}"
+                                                data-floor="{{ room[6] }}"
+                                                data-available="{{ room[7] }}">
+                                            Room {{ room[1] }} ({{ room[2] }}) - Floor {{ room[6] }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">{{ available_rooms|length }} room(s) available for transfer</div>
+                                </div>
+
+                                <!-- New Room Details Display -->
+                                <div id="newRoomDetails" class="card bg-light" style="display: none;">
+                                    <div class="card-body">
+                                        <div class="text-center">
+                                            <i class="fas fa-bed fa-3x text-success mb-3"></i>
+                                            <h4 class="text-success" id="newRoomNumber">Room -</h4>
+                                            <p class="mb-2">
+                                                <span class="badge bg-success" id="newRoomType">-</span>
+                                            </p>
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <small><strong>Floor:</strong> <span id="newRoomFloor">-</span></small><br>
+                                                    <small><strong>Rent:</strong> $<span id="newRoomRent">-</span>/month</small>
+                                                </div>
+                                                <div class="col-6">
+                                                    <small><strong>Capacity:</strong> <span id="newRoomCapacity">-</span></small><br>
+                                                    <small><strong>Available:</strong> <span id="newRoomAvailable">-</span> space(s)</small>
+                                                </div>
+                                            </div>
+
+                                            <!-- Occupancy Progress Bar -->
+                                            <div class="mt-2">
+                                                <small class="text-muted">Occupancy:</small>
+                                                <div class="progress" style="height: 15px;">
+                                                    <div id="newOccupancyBar" class="progress-bar" style="width: 0%"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Transfer Summary -->
+                                <div id="transferSummary" class="mt-3" style="display: none;">
+                                    <div class="card border-info">
+                                        <div class="card-header bg-info text-white">
+                                            <h6 class="mb-0"><i class="fas fa-exchange-alt"></i> Transfer Summary</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <i class="fas fa-arrow-right fa-2x text-info"></i>
+                                                </div>
+                                                <div class="text-center">
+                                                    <small class="text-muted">{{ assignment[5] }} {{ assignment[6] }}</small><br>
+                                                    <strong>Room {{ assignment[7] }}</strong> → <strong id="summaryNewRoom">Room -</strong><br>
+                                                    <small class="text-muted">Rent change: <span id="rentChange">$0.00</span></small>
+                                                </div>
+                                                <div>
+                                                    <i class="fas fa-check fa-2x text-success"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transfer Reason (Optional) -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="border-top pt-4">
+                                <div class="mb-3">
+                                    <label for="transfer_reason" class="form-label">
+                                        <i class="fas fa-comment text-info"></i> Transfer Reason (Optional)
+                                    </label>
+                                    <textarea class="form-control" id="transfer_reason" name="transfer_reason"
+                                              rows="3" placeholder="Enter reason for room transfer..."></textarea>
+                                    <div class="form-text">This information will be logged for record keeping</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="border-top pt-4">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle"></i>
+                                            This will complete the current assignment and create a new one
+                                        </small>
+                                    </div>
+                                    <div>
+                                        <a href="{{ url_for('assignments.list_assignments') }}" class="btn btn-outline-secondary me-2">
+                                            <i class="fas fa-times"></i> Cancel
+                                        </a>
+                                        <button type="submit" class="btn btn-warning">
+                                            <i class="fas fa-exchange-alt"></i> Transfer Student
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Transfer Guidelines -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6 class="text-primary mb-3"><i class="fas fa-lightbulb"></i> Transfer Guidelines</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <small>
+                            <strong>Process:</strong> The current assignment will be marked as completed and a new assignment will be created for the new room.
+                        </small>
+                    </div>
+                    <div class="col-md-6">
+                        <small>
+                            <strong>Billing:</strong> Rent changes will take effect from the transfer date. Contact finance for prorated billing adjustments.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const newRoomSelect = document.getElementById('new_room_id');
+    const newRoomDetails = document.getElementById('newRoomDetails');
+    const transferSummary = document.getElementById('transferSummary');
+    const currentRent = 0; // This would come from the current room data
+
+    // New room selection handler
+    newRoomSelect.addEventListener('change', function() {
+        const option = this.options[this.selectedIndex];
+        if (this.value) {
+            const capacity = parseInt(option.dataset.capacity);
+            const occupancy = parseInt(option.dataset.occupancy);
+            const available = capacity - occupancy;
+            const occupancyPercent = (occupancy / capacity) * 100;
+            const newRent = parseFloat(option.dataset.rent);
+
+            // Update room details
+            const roomNumber = option.text.split(' (')[0];
+            document.getElementById('newRoomNumber').textContent = roomNumber;
+            document.getElementById('newRoomType').textContent = option.dataset.type;
+            document.getElementById('newRoomFloor').textContent = option.dataset.floor;
+            document.getElementById('newRoomRent').textContent = newRent.toFixed(2);
+            document.getElementById('newRoomCapacity').textContent = capacity;
+            document.getElementById('newRoomAvailable').textContent = available;
+
+            // Update progress bar
+            const progressBar = document.getElementById('newOccupancyBar');
+            progressBar.style.width = occupancyPercent + '%';
+            progressBar.className = `progress-bar ${occupancyPercent >= 80 ? 'bg-warning' : 'bg-success'}`;
+
+            // Update transfer summary
+            document.getElementById('summaryNewRoom').textContent = roomNumber;
+            const rentDifference = newRent - currentRent;
+            const rentChangeSpan = document.getElementById('rentChange');
+            if (rentDifference > 0) {
+                rentChangeSpan.textContent = '+$' + rentDifference.toFixed(2);
+                rentChangeSpan.className = 'text-danger';
+            } else if (rentDifference < 0) {
+                rentChangeSpan.textContent = '-$' + Math.abs(rentDifference).toFixed(2);
+                rentChangeSpan.className = 'text-success';
+            } else {
+                rentChangeSpan.textContent = '$0.00';
+                rentChangeSpan.className = 'text-muted';
+            }
+
+            newRoomDetails.style.display = 'block';
+            transferSummary.style.display = 'block';
+        } else {
+            newRoomDetails.style.display = 'none';
+            transferSummary.style.display = 'none';
+        }
+    });
+
+    // Form validation
+    document.getElementById('transferForm').addEventListener('submit', function(e) {
+        if (!this.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+        } else {
+            // Confirm transfer
+            const studentName = '{{ assignment[5] }} {{ assignment[6] }}';
+            const currentRoom = 'Room {{ assignment[7] }}';
+            const newRoomOption = newRoomSelect.options[newRoomSelect.selectedIndex];
+            const newRoom = newRoomOption ? newRoomOption.text.split(' (')[0] : '';
+
+            if (!confirm(`Are you sure you want to transfer ${studentName} from ${currentRoom} to ${newRoom}?`)) {
+                e.preventDefault();
+            }
+        }
+        this.classList.add('was-validated');
+    });
+});
+</script>
+{% endblock %}

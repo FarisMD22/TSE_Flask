@@ -1,0 +1,214 @@
+<!-- templates/assignments/assign.html - WORKING VERSION -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assign Student - Hostel Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-building"></i> Hostel Management System
+            </a>
+            <div>
+                <span class="text-white me-3">Welcome, {{ session.get('full_name', session.get('username')) }}</span>
+                <a href="/logout" class="btn btn-outline-light btn-sm">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-plus me-2"></i>Assign Student to Room
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="student_id" class="form-label">
+                                        <i class="fas fa-user me-1"></i>Select Student
+                                    </label>
+                                    <select class="form-select" id="student_id" name="student_id" required>
+                                        <option value="">Choose a student...</option>
+                                        {% for student in unassigned_students %}
+                                            <option value="{{ student[0] }}">
+                                                {{ student[2] }} {{ student[3] }} - {{ student[1] }}
+                                                {% if student[6] %} ({{ student[6] }}){% endif %}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    {% if not unassigned_students %}
+                                        <div class="form-text text-warning">
+                                            <i class="fas fa-exclamation-triangle"></i> No unassigned students available
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="room_id" class="form-label">
+                                        <i class="fas fa-bed me-1"></i>Select Room
+                                    </label>
+                                    <select class="form-select" id="room_id" name="room_id" required>
+                                        <option value="">Choose a room...</option>
+                                        {% for room in available_rooms %}
+                                            <option value="{{ room[0] }}"
+                                                    data-capacity="{{ room[3] }}"
+                                                    data-occupancy="{{ room[4] }}"
+                                                    data-rent="{{ room[5] if room[5] else 0 }}">
+                                                Room {{ room[1] }} - {{ room[2] }}
+                                                ({{ room[4] }}/{{ room[3] }} occupied)
+                                                {% if room[5] %} - RM {{ "%.2f"|format(room[5]) }}{% endif %}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    {% if not available_rooms %}
+                                        <div class="form-text text-warning">
+                                            <i class="fas fa-exclamation-triangle"></i> No available rooms
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="assigned_date" class="form-label">
+                                        <i class="fas fa-calendar me-1"></i>Assignment Date
+                                    </label>
+                                    <input type="date" class="form-control" id="assigned_date" name="assigned_date"
+                                           value="{{ today }}" min="{{ today }}" required>
+                                    <div class="form-text">Assignment date cannot be in the past</div>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-info-circle me-1"></i>Room Information
+                                    </label>
+                                    <div id="roomInfo" class="p-3 bg-light rounded">
+                                        <span class="text-muted">Select a room to see details</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <strong>Assignment Rules:</strong>
+                                        <ul class="mb-0 mt-2">
+                                            <li>Students can only have one active room assignment</li>
+                                            <li>Rooms cannot exceed their capacity</li>
+                                            <li>Assignment date cannot be in the past</li>
+                                            <li>Only active students can be assigned</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <a href="{{ url_for('assignments.list_assignments') }}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-1"></i>Back to Assignments
+                                </a>
+                                <button type="submit" class="btn btn-primary" id="submitBtn">
+                                    <i class="fas fa-save me-1"></i>Create Assignment
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const roomSelect = document.getElementById('room_id');
+            const roomInfo = document.getElementById('roomInfo');
+            const submitBtn = document.getElementById('submitBtn');
+            const form = document.querySelector('form');
+
+            // Form submission debug
+            form.addEventListener('submit', function(e) {
+                const studentId = document.getElementById('student_id').value;
+                const roomId = document.getElementById('room_id').value;
+                const assignedDate = document.getElementById('assigned_date').value;
+
+                console.log('Form submission - Student ID:', studentId);
+                console.log('Form submission - Room ID:', roomId);
+                console.log('Form submission - Date:', assignedDate);
+
+                if (!studentId || !roomId || !assignedDate) {
+                    e.preventDefault();
+                    alert('Please fill in all fields');
+                    return false;
+                }
+            });
+
+            // Update room information when room is selected
+            roomSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+
+                if (this.value) {
+                    const capacity = selectedOption.getAttribute('data-capacity');
+                    const occupancy = selectedOption.getAttribute('data-occupancy');
+                    const rent = selectedOption.getAttribute('data-rent');
+                    const available = capacity - occupancy;
+
+                    let rentText = rent && rent !== '0' ? `RM ${parseFloat(rent).toFixed(2)}/month` : 'Rent not set';
+
+                    roomInfo.innerHTML = `
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <small class="text-muted">Capacity:</small><br>
+                                <strong>${occupancy}/${capacity} occupied</strong>
+                            </div>
+                            <div class="col-sm-6">
+                                <small class="text-muted">Monthly Rent:</small><br>
+                                <strong>${rentText}</strong>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <span class="badge ${available > 0 ? 'bg-success' : 'bg-danger'}">
+                                ${available} space${available !== 1 ? 's' : ''} available
+                            </span>
+                        </div>
+                    `;
+                } else {
+                    roomInfo.innerHTML = '<span class="text-muted">Select a room to see details</span>';
+                }
+            });
+
+            // Set minimum date to today and default value
+            const dateInput = document.getElementById('assigned_date');
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.setAttribute('min', today);
+            if (!dateInput.value) {
+                dateInput.value = today;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}{{ student[2] }} {{ student[3] }} - Payment History{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-user text-info"></i> {{ student[2] }} {{ student[3] }} - Payment History</h2>
+                <a href="{{ url_for('payments.payment_list') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Payments
+                </a>
+            </div>
+
+            <!-- Student Info Card -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Student Information</h5>
+                            <p><strong>Student Number:</strong> {{ student[1] }}</p>
+                            <p><strong>Email:</strong> {{ student[4] if student[4] else 'N/A' }}</p>
+                            <p><strong>Phone:</strong> {{ student[5] if student[5] else 'N/A' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Academic Information</h5>
+                            <p><strong>Course:</strong> {{ student[9] if student[9] else 'N/A' }}</p>
+                            <p><strong>Year of Study:</strong> {{ student[10] if student[10] else 'N/A' }}</p>
+                            <p><strong>Status:</strong>
+                                <span class="badge bg-{% if student[11] == 'Active' %}success{% else %}secondary{% endif %}">
+                                    {{ student[11] }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Outstanding Dues -->
+            {% if dues %}
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5><i class="fas fa-exclamation-triangle"></i> Outstanding Dues</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Month/Year</th>
+                                    <th>Amount Due</th>
+                                    <th>Due Date</th>
+                                    <th>Late Fee</th>
+                                    <th>Total</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for due in dues %}
+                                <tr>
+                                    <td>{{ due.category_name }}</td>
+                                    <td>{{ due.month_year }}</td>
+                                    <td>RM {{ "%.2f"|format(due.amount_due) }}</td>
+                                    <td>{{ due.due_date }}</td>
+                                    <td>RM {{ "%.2f"|format(due.late_fee) }}</td>
+                                    <td><strong>RM {{ "%.2f"|format(due.amount_due + due.late_fee) }}</strong></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-success"
+                                                onclick="payNow({{ due.due_id }}, {{ due.amount_due + due.late_fee }})">
+                                            Pay Now
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Payment History -->
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-history"></i> Payment History</h5>
+                </div>
+                <div class="card-body">
+                    {% if payments %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Category</th>
+                                    <th>Amount</th>
+                                    <th>Method</th>
+                                    <th>Status</th>
+                                    <th>Receipt #</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in payments %}
+                                <tr>
+                                    <td>{{ payment.payment_date }}</td>
+                                    <td>{{ payment.category_name }}</td>
+                                    <td>
+                                        RM {{ "%.2f"|format(payment.amount) }}
+                                        {% if payment.late_fee > 0 %}
+                                            <br><small class="text-danger">+RM {{ "%.2f"|format(payment.late_fee) }} late fee</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ payment.payment_method }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if payment.payment_status == 'Completed' %}success{% else %}warning{% endif %}">
+                                            {{ payment.payment_status }}
+                                        </span>
+                                    </td>
+                                    <td>{{ payment.receipt_number }}</td>
+                                    <td>{{ payment.notes if payment.notes else '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No payment history found</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function payNow(dueId, amount) {
+    // Redirect to payment form with pre-filled data
+    const url = `{{ url_for('payments.add_payment') }}?due_id=${dueId}&student_id={{ student[0] }}&amount=${amount}`;
+    window.location.href = url;
+}
+</script>
+{% endblock %}

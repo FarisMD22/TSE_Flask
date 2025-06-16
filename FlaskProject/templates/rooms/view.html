@@ -1,0 +1,429 @@
+{% extends "base.html" %}
+
+{% block title %}Room {{ room[1] }} - Room Details{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <!-- Room Profile Header -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar bg-white text-primary rounded-circle d-flex align-items-center justify-content-center me-3"
+                             style="width: 50px; height: 50px; font-size: 18px; font-weight: bold;">
+                            <i class="fas fa-bed"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-0">Room {{ room[1] }}</h4>
+                            <small>{{ room[2] }} Room | Floor {{ room[5] }}</small>
+                        </div>
+                    </div>
+                    <div>
+                        {% if room[7] == 'Available' %}
+                            <span class="badge bg-success fs-6">
+                                <i class="fas fa-check-circle"></i> Available
+                            </span>
+                        {% elif room[7] == 'Occupied' %}
+                            <span class="badge bg-warning fs-6">
+                                <i class="fas fa-users"></i> Occupied
+                            </span>
+                        {% elif room[7] == 'Maintenance' %}
+                            <span class="badge bg-danger fs-6">
+                                <i class="fas fa-tools"></i> Maintenance
+                            </span>
+                        {% else %}
+                            <span class="badge bg-secondary fs-6">{{ room[7] }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h5 class="text-primary">{{ room[2] }}</h5>
+                            <small class="text-muted">Room Type</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h5 class="text-success">{{ room[3] }} Person(s)</h5>
+                            <small class="text-muted">Capacity</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h5 class="{% if room[4] == 0 %}text-info{% elif room[4] == room[3] %}text-danger{% else %}text-warning{% endif %}">
+                                {{ room[4] }}/{{ room[3] }}
+                            </h5>
+                            <small class="text-muted">Current Occupancy</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <h5 class="text-success">${{ "%.2f"|format(room[6]) }}</h5>
+                        <small class="text-muted">Monthly Rent</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Information Tabs -->
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="roomTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab">
+                            <i class="fas fa-info-circle"></i> Room Details
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="residents-tab" data-bs-toggle="tab" data-bs-target="#residents" type="button" role="tab">
+                            <i class="fas fa-users"></i> Current Residents
+                            {% if students %}
+                                <span class="badge bg-primary ms-1">{{ students|length }}</span>
+                            {% endif %}
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">
+                            <i class="fas fa-history"></i> Assignment History
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content" id="roomTabsContent">
+                    <!-- Room Details Tab -->
+                    <div class="tab-pane fade show active" id="details" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td class="fw-bold"><i class="fas fa-door-closed text-primary"></i> Room Number:</td>
+                                        <td>{{ room[1] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold"><i class="fas fa-home text-primary"></i> Room Type:</td>
+                                        <td>
+                                            <span class="badge
+                                                {% if room[2] == 'Single' %}bg-info
+                                                {% elif room[2] == 'Double' %}bg-success
+                                                {% elif room[2] == 'Triple' %}bg-warning
+                                                {% else %}bg-secondary{% endif %}">
+                                                {{ room[2] }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold"><i class="fas fa-layer-group text-primary"></i> Floor Number:</td>
+                                        <td>Floor {{ room[5] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold"><i class="fas fa-users text-primary"></i> Capacity:</td>
+                                        <td>{{ room[3] }} person(s)</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td class="fw-bold"><i class="fas fa-chart-bar text-primary"></i> Current Occupancy:</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress flex-grow-1 me-2" style="height: 20px;">
+                                                    {% set occupancy_percent = (room[4] / room[3] * 100) if room[3] > 0 else 0 %}
+                                                    <div class="progress-bar
+                                                        {% if occupancy_percent == 100 %}bg-danger
+                                                        {% elif occupancy_percent >= 80 %}bg-warning
+                                                        {% elif occupancy_percent > 0 %}bg-success
+                                                        {% else %}bg-light{% endif %}"
+                                                        style="width: {{ occupancy_percent }}%">
+                                                    </div>
+                                                </div>
+                                                <span>{{ room[4] }}/{{ room[3] }}</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold"><i class="fas fa-dollar-sign text-primary"></i> Monthly Rent:</td>
+                                        <td>
+                                            <strong class="text-success">${{ "%.2f"|format(room[6]) }}</strong>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold"><i class="fas fa-info-circle text-primary"></i> Status:</td>
+                                        <td>
+                                            {% if room[7] == 'Available' %}
+                                                <span class="badge bg-success">Available</span>
+                                            {% elif room[7] == 'Occupied' %}
+                                                <span class="badge bg-warning">Occupied</span>
+                                            {% elif room[7] == 'Maintenance' %}
+                                                <span class="badge bg-danger">Maintenance</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ room[7] }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold"><i class="fas fa-calendar-plus text-primary"></i> Created:</td>
+                                        <td>{{ room[8] if room[8] else 'Not available' }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Room Features -->
+                        <div class="mt-4">
+                            <h6 class="text-info mb-3">
+                                <i class="fas fa-star"></i> Room Features & Amenities
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fas fa-snowflake text-info me-2"></i>
+                                        <span>Air Conditioning</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fas fa-wifi text-info me-2"></i>
+                                        <span>WiFi Internet</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fas fa-bed text-info me-2"></i>
+                                        <span>Furnished</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fas fa-lightbulb text-info me-2"></i>
+                                        <span>24/7 Electricity</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fas fa-shield-alt text-info me-2"></i>
+                                        <span>Security</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fas fa-broom text-info me-2"></i>
+                                        <span>Cleaning Service</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Current Residents Tab -->
+                    <div class="tab-pane fade" id="residents" role="tabpanel">
+                        {% if students %}
+                        <div class="row">
+                            {% for student in students %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3"
+                                                 style="width: 40px; height: 40px; font-size: 14px;">
+                                                {{ student[2][0] }}{{ student[3][0] }}
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-1">{{ student[2] }} {{ student[3] }}</h6>
+                                                <small class="text-muted">{{ student[1] }}</small>
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-calendar"></i> Assigned: {{ student[6] }}
+                                                </small>
+                                            </div>
+                                            <div>
+                                                <a href="/students/view/{{ student[0] }}" class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-eye"></i> View
+                                                </a>
+                                            </div>
+                                        </div>
+                                        {% if student[4] %}
+                                        <div class="mt-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-envelope"></i> {{ student[4] }}
+                                            </small>
+                                        </div>
+                                        {% endif %}
+                                        {% if student[5] %}
+                                        <div>
+                                            <small class="text-muted">
+                                                <i class="fas fa-phone"></i> {{ student[5] }}
+                                            </small>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        {% if room[4] < room[3] %}
+                        <div class="mt-4 p-3 bg-light rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-success mb-1">
+                                        <i class="fas fa-plus-circle"></i> Available Space
+                                    </h6>
+                                    <small class="text-muted">
+                                        {{ room[3] - room[4] }} more student(s) can be assigned to this room
+                                    </small>
+                                </div>
+                                <button class="btn btn-success btn-sm" onclick="alert('Student assignment feature coming soon!')">
+                                    <i class="fas fa-user-plus"></i> Assign Student
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Current Residents</h5>
+                            <p class="text-muted">This room is currently empty and available for assignment.</p>
+                            <button class="btn btn-success" onclick="alert('Student assignment feature coming soon!')">
+                                <i class="fas fa-user-plus"></i> Assign First Student
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Assignment History Tab -->
+                    <div class="tab-pane fade" id="history" role="tabpanel">
+                        <div class="text-center py-5">
+                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Assignment History</h5>
+                            <p class="text-muted">Assignment history feature will be available soon.</p>
+                            <button class="btn btn-outline-info" onclick="alert('Assignment history feature coming soon!')">
+                                <i class="fas fa-clock"></i> View History
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('rooms.list_rooms') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Rooms
+                    </a>
+                    <div>
+                        <a href="{{ url_for('rooms.edit_room', room_id=room[0]) }}" class="btn btn-primary me-2">
+                            <i class="fas fa-edit"></i> Edit Room
+                        </a>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="fas fa-cog"></i> Actions
+                            </button>
+                            <ul class="dropdown-menu">
+                                {% if room[4] < room[3] %}
+                                <li><a class="dropdown-item" href="#" onclick="alert('Student assignment feature coming soon!')">
+                                    <i class="fas fa-user-plus"></i> Assign Student
+                                </a></li>
+                                {% endif %}
+                                <li><a class="dropdown-item" href="#" onclick="alert('Room transfer feature coming soon!')">
+                                    <i class="fas fa-exchange-alt"></i> Transfer Students
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" onclick="alert('Print room info feature coming soon!')">
+                                    <i class="fas fa-print"></i> Print Room Info
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="alert('Generate QR code feature coming soon!')">
+                                    <i class="fas fa-qrcode"></i> Generate QR Code
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-md-4">
+        <!-- Room Statistics -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="fas fa-chart-pie"></i> Room Statistics</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h4 class="text-primary">{{ room[4] }}</h4>
+                            <small class="text-muted">Current Occupants</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success">{{ room[3] - room[4] }}</h4>
+                        <small class="text-muted">Available Spaces</small>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center">
+                    {% set occupancy_rate = (room[4] / room[3] * 100) if room[3] > 0 else 0 %}
+                    <h5 class="
+                        {% if occupancy_rate == 100 %}text-danger
+                        {% elif occupancy_rate >= 80 %}text-warning
+                        {% elif occupancy_rate > 0 %}text-success
+                        {% else %}text-info{% endif %}">
+                        {{ "%.1f"|format(occupancy_rate) }}%
+                    </h5>
+                    <small class="text-muted">Occupancy Rate</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if room[4] < room[3] %}
+                    <button class="btn btn-success btn-sm" onclick="alert('Student assignment feature coming soon!')">
+                        <i class="fas fa-user-plus"></i> Assign Student
+                    </button>
+                    {% endif %}
+
+                    <button class="btn btn-info btn-sm" onclick="alert('Maintenance request feature coming soon!')">
+                        <i class="fas fa-tools"></i> Request Maintenance
+                    </button>
+
+                    <button class="btn btn-outline-primary btn-sm" onclick="alert('Room inspection feature coming soon!')">
+                        <i class="fas fa-clipboard-check"></i> Schedule Inspection
+                    </button>
+
+                    <button class="btn btn-outline-secondary btn-sm" onclick="alert('Room report feature coming soon!')">
+                        <i class="fas fa-file-pdf"></i> Generate Report
+                    </button>
+
+                    {% if room[7] == 'Available' %}
+                    <button class="btn btn-warning btn-sm" onclick="changeRoomStatus('Maintenance')">
+                        <i class="fas fa-exclamation-triangle"></i> Mark for Maintenance
+                    </button>
+                    {% elif room[7] == 'Maintenance' %}
+                    <button class="btn btn-success btn-sm" onclick="changeRoomStatus('Available')">
+                        <i class="fas fa-check"></i> Mark as Available
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function changeRoomStatus(newStatus) {
+    if (confirm(`Are you sure you want to change room status to ${newStatus}?`)) {
+        alert(`Room status change feature coming soon! (${newStatus})`);
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}{{ student[2] }} {{ student[3] }} - Student Profile{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <!-- Student Profile Header -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar bg-white text-info rounded-circle d-flex align-items-center justify-content-center me-3"
+                             style="width: 50px; height: 50px; font-size: 18px; font-weight: bold;">
+                            {{ student[2][0] }}{{ student[3][0] }}
+                        </div>
+                        <div>
+                            <h4 class="mb-0">{{ student[2] }} {{ student[3] }}</h4>
+                            <small>{{ student[1] }} | {{ student[4] }}</small>
+                        </div>
+                    </div>
+                    <div>
+                        {% if student[12] == 'Active' %}
+                            <span class="badge bg-success fs-6">
+                                <i class="fas fa-check-circle"></i> Active
+                            </span>
+                        {% elif student[12] == 'Inactive' %}
+                            <span class="badge bg-secondary fs-6">
+                                <i class="fas fa-pause-circle"></i> Inactive
+                            </span>
+                        {% else %}
+                            <span class="badge bg-light text-dark fs-6">
+                                <i class="fas fa-graduation-cap"></i> Graduated
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="border-end">
+                            <h5 class="text-primary">{{ student[9] or 'No Course' }}</h5>
+                            <small class="text-muted">Course/Program</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border-end">
+                            <h5 class="text-success">
+                                {% if student[10] %}
+                                    Year {{ student[10] }}
+                                {% else %}
+                                    Not Set
+                                {% endif %}
+                            </h5>
+                            <small class="text-muted">Year of Study</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h5 class="{% if student[14] %}text-success{% else %}text-warning{% endif %}">
+                            {% if student[14] %}
+                                Room {{ student[14] }}
+                            {% else %}
+                                No Room
+                            {% endif %}
+                        </h5>
+                        <small class="text-muted">Current Room</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Information -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-user"></i> Student Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td class="fw-bold"><i class="fas fa-id-card text-primary"></i> Student Number:</td>
+                                <td>{{ student[1] }}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold"><i class="fas fa-user text-primary"></i> Full Name:</td>
+                                <td>{{ student[2] }} {{ student[3] }}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold"><i class="fas fa-envelope text-primary"></i> Email:</td>
+                                <td>
+                                    <a href="mailto:{{ student[4] }}">{{ student[4] }}</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold"><i class="fas fa-phone text-primary"></i> Phone:</td>
+                                <td>
+                                    {% if student[5] %}
+                                        <a href="tel:{{ student[5] }}">{{ student[5] }}</a>
+                                    {% else %}
+                                        <span class="text-muted">Not provided</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td class="fw-bold"><i class="fas fa-graduation-cap text-success"></i> Course:</td>
+                                <td>{{ student[9] if student[9] else 'Not specified' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold"><i class="fas fa-calendar text-success"></i> Year of Study:</td>
+                                <td>
+                                    {% if student[10] %}
+                                        Year {{ student[10] }}
+                                    {% else %}
+                                        Not specified
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold"><i class="fas fa-info-circle text-primary"></i> Status:</td>
+                                <td>
+                                    {% if student[12] == 'Active' %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% elif student[12] == 'Inactive' %}
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    {% else %}
+                                        <span class="badge bg-info">Graduated</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold"><i class="fas fa-calendar-plus text-primary"></i> Date Joined:</td>
+                                <td>{{ student[11] if student[11] else 'Not specified' }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                {% if student[7] or student[8] %}
+                <hr>
+                <h6 class="text-warning"><i class="fas fa-user-friends"></i> Guardian Information</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Guardian Name:</strong> {{ student[7] if student[7] else 'Not provided' }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Guardian Phone:</strong>
+                        {% if student[8] %}
+                            <a href="tel:{{ student[8] }}">{{ student[8] }}</a>
+                        {% else %}
+                            Not provided
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('students.list_students') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Students
+                    </a>
+                    <div>
+                        <a href="{{ url_for('students.edit_student', student_id=student[0]) }}" class="btn btn-primary me-2">
+                            <i class="fas fa-edit"></i> Edit Student
+                        </a>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="fas fa-cog"></i> Actions
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="alert('Feature coming soon!')">
+                                    <i class="fas fa-id-card"></i> Generate ID Card
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="alert('Feature coming soon!')">
+                                    <i class="fas fa-print"></i> Print Profile
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-md-4">
+        <!-- Payment History -->
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0"><i class="fas fa-money-bill-wave"></i> Payment History</h6>
+            </div>
+            <div class="card-body">
+                {% if payments %}
+                    {% for payment in payments %}
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded">
+                        <div>
+                            <strong class="text-success">${{ "%.2f"|format(payment[1]) }}</strong>
+                            <small class="d-block text-muted">{{ payment[3] }}</small>
+                            <small class="text-muted">{{ payment[2] }}</small>
+                        </div>
+                        <span class="badge bg-success">{{ payment[6] }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-money-bill-wave fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">No payment history found</p>
+                        <button class="btn btn-warning btn-sm mt-2" onclick="alert('Payment feature coming soon!')">
+                            <i class="fas fa-plus"></i> Record Payment
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-success btn-sm" onclick="alert('Room assignment coming soon!')">
+                        <i class="fas fa-bed"></i> Assign Room
+                    </button>
+                    <button class="btn btn-info btn-sm" onclick="alert('Payment recording coming soon!')">
+                        <i class="fas fa-dollar-sign"></i> Record Payment
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm" onclick="alert('Report generation coming soon!')">
+                        <i class="fas fa-file-pdf"></i> Generate Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

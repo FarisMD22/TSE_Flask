@@ -1,0 +1,285 @@
+<!-- Replace templates/assignments/history.html with this simplified version -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignment History - Hostel Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-building"></i> Hostel Management System
+            </a>
+            <div>
+                <span class="text-white me-3">Welcome, {{ session.get('full_name', session.get('username')) }}</span>
+                <a href="/logout" class="btn btn-outline-light btn-sm">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2><i class="fas fa-history me-2"></i>Assignment History</h2>
+                <p class="text-muted mb-0">Complete record of all room assignments</p>
+            </div>
+            <div>
+                <a href="{{ url_for('assignments.assignment_dashboard') }}" class="btn btn-outline-info me-2">
+                    <i class="fas fa-chart-pie me-1"></i>Dashboard
+                </a>
+                <a href="{{ url_for('assignments.list_assignments') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-list me-1"></i>Current Assignments
+                </a>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        {% if history %}
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-list fa-2x mb-2"></i>
+                        <h4>{{ history|length }}</h4>
+                        <small>Total Records</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-check-circle fa-2x mb-2"></i>
+                        <h4>
+                            {% set active_count = 0 %}
+                            {% for record in history %}
+                                {% if record[5] == 'Active' %}
+                                    {% set active_count = active_count + 1 %}
+                                {% endif %}
+                            {% endfor %}
+                            {{ active_count }}
+                        </h4>
+                        <small>Currently Active</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-secondary text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-flag-checkered fa-2x mb-2"></i>
+                        <h4>
+                            {% set completed_count = 0 %}
+                            {% for record in history %}
+                                {% if record[5] == 'Completed' %}
+                                    {% set completed_count = completed_count + 1 %}
+                                {% endif %}
+                            {% endfor %}
+                            {{ completed_count }}
+                        </h4>
+                        <small>Completed</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-exchange-alt fa-2x mb-2"></i>
+                        <h4>
+                            {% set transferred_count = 0 %}
+                            {% for record in history %}
+                                {% if record[5] == 'Transferred' %}
+                                    {% set transferred_count = transferred_count + 1 %}
+                                {% endif %}
+                            {% endfor %}
+                            {{ transferred_count }}
+                        </h4>
+                        <small>Transferred</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- History Table -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Assignment Timeline
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if history %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th><i class="fas fa-user me-1"></i>Student</th>
+                                <th><i class="fas fa-bed me-1"></i>Room</th>
+                                <th><i class="fas fa-calendar me-1"></i>Assigned Date</th>
+                                <th><i class="fas fa-calendar-check me-1"></i>Checkout Date</th>
+                                <th><i class="fas fa-info-circle me-1"></i>Status</th>
+                                <th><i class="fas fa-clock me-1"></i>Created</th>
+                                <th><i class="fas fa-cog me-1"></i>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in history %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2"
+                                             style="width: 35px; height: 35px; font-size: 12px;">
+                                            {% if record[8] and record[9] %}
+                                                {{ record[8][0] }}{{ record[9][0] }}
+                                            {% else %}
+                                                ?
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">
+                                                {% if record[8] and record[9] %}
+                                                    {{ record[8] }} {{ record[9] }}
+                                                {% else %}
+                                                    Unknown Student
+                                                {% endif %}
+                                            </div>
+                                            <small class="text-muted">
+                                                {% if record[7] %}
+                                                    {{ record[7] }}
+                                                {% else %}
+                                                    No student number
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong class="text-primary">
+                                            {% if record[10] %}
+                                                {{ record[10] }}
+                                            {% else %}
+                                                Unknown Room
+                                            {% endif %}
+                                        </strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            {% if record[11] %}
+                                                <span class="badge bg-secondary">{{ record[11] }}</span>
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if record[3] %}
+                                        <i class="fas fa-calendar-plus text-success me-1"></i>
+                                        {{ record[3] }}
+                                    {% else %}
+                                        <span class="text-muted">Not set</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if record[4] %}
+                                        <i class="fas fa-calendar-minus text-danger me-1"></i>
+                                        {{ record[4] }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if record[5] == 'Active' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-circle me-1"></i>Active
+                                        </span>
+                                    {% elif record[5] == 'Completed' %}
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-flag-checkered me-1"></i>Completed
+                                        </span>
+                                    {% elif record[5] == 'Transferred' %}
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-exchange-alt me-1"></i>Transferred
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning">
+                                            {{ record[5] if record[5] else 'Unknown' }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if record[6] %}
+                                        <small class="text-muted">{{ record[6] }}</small>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        {% if record[5] == 'Active' %}
+                                            <a href="{{ url_for('assignments.transfer_student', assignment_id=record[0]) }}"
+                                               class="btn btn-outline-warning btn-sm" title="Transfer">
+                                                <i class="fas fa-exchange-alt"></i>
+                                            </a>
+                                        {% endif %}
+                                        <button class="btn btn-outline-info btn-sm" title="View Details" 
+                                                onclick="showDetails({{ record[0] }})">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-history fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Assignment History Found</h4>
+                    <p class="text-muted">No assignments have been created yet.</p>
+                    <a href="{{ url_for('assignments.assign_student') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Create First Assignment
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showDetails(assignmentId) {
+            alert('Assignment details for ID: ' + assignmentId + '\n(Details view coming soon!)');
+        }
+
+        // Auto-dismiss alerts
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                setTimeout(function() {
+                    if (alert.parentNode) {
+                        alert.remove();
+                    }
+                }, 5000);
+            });
+        });
+    </script>
+</body>
+</html>

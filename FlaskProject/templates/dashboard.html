@@ -1,0 +1,451 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Hostel Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
+        <p class="text-muted mb-0">Welcome back, {{ session.full_name or session.username }}!</p>
+    </div>
+    <div class="text-end">
+        <small class="text-muted d-block">{{ session.role }} Account</small>
+        <small class="text-muted">Last updated: <span id="currentTime"></span></small>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary h-100">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="card-title">Total Students</h5>
+                        <h2 class="mb-0">{{ stats.total_students or 0 }}</h2>
+                        <small class="opacity-75">Active students</small>
+                    </div>
+                    <i class="fas fa-users fa-2x opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-primary border-0">
+                <a href="{{ url_for('students.list_students') }}" class="text-white text-decoration-none">
+                    <i class="fas fa-eye"></i> View All Students
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-success h-100">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="card-title">Total Rooms</h5>
+                        <h2 class="mb-0">{{ stats.total_rooms or 0 }}</h2>
+                        <small class="opacity-75">All rooms</small>
+                    </div>
+                    <i class="fas fa-bed fa-2x opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-success border-0">
+                <a href="{{ url_for('rooms.list_rooms') }}" class="text-white text-decoration-none">
+                    <i class="fas fa-eye"></i> View All Rooms
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-warning h-100">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="card-title">Available Rooms</h5>
+                        <h2 class="mb-0">{{ stats.available_rooms or 0 }}</h2>
+                        <small class="opacity-75">Ready for assignment</small>
+                    </div>
+                    <i class="fas fa-door-open fa-2x opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-warning border-0">
+                <a href="{{ url_for('rooms.list_rooms') }}" class="text-white text-decoration-none">
+                    <i class="fas fa-plus"></i> Assign Rooms
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-info h-100">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="card-title">Occupied Rooms</h5>
+                        <h2 class="mb-0">{{ stats.occupied_rooms or 0 }}</h2>
+                        <small class="opacity-75">Currently occupied</small>
+                    </div>
+                    <i class="fas fa-user-check fa-2x opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-info border-0">
+                <a href="{{ url_for('rooms.list_rooms') }}" class="text-white text-decoration-none">
+                    <i class="fas fa-chart-pie"></i> View Report
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== NEW CODE ADDED: Payment Statistics Row ========== -->
+<!-- Payment Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-success h-100">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="card-title">Monthly Revenue</h5>
+                        <h2 class="mb-0">RM {{ "%.0f"|format(stats.monthly_revenue or 0) }}</h2>
+                        <small class="opacity-75">This month</small>
+                    </div>
+                    <i class="fas fa-money-bill-wave fa-2x opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-success border-0">
+                <a href="{{ url_for('payments.payment_dashboard') }}" class="text-white text-decoration-none">
+                    <i class="fas fa-chart-bar"></i> Payment Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-danger h-100">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="card-title">Outstanding Dues</h5>
+                        <h2 class="mb-0">RM {{ "%.0f"|format(stats.outstanding_dues or 0) }}</h2>
+                        <small class="opacity-75">Unpaid amounts</small>
+                    </div>
+                    <i class="fas fa-exclamation-triangle fa-2x opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-danger border-0">
+                <a href="{{ url_for('payments.outstanding_dues') }}" class="text-white text-decoration-none">
+                    <i class="fas fa-eye"></i> View Outstanding
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-warning h-100">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="card-title">Pending Students</h5>
+                        <h2 class="mb-0">{{ stats.pending_students or 0 }}</h2>
+                        <small class="opacity-75">With outstanding dues</small>
+                    </div>
+                    <i class="fas fa-users fa-2x opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-warning border-0">
+                <a href="{{ url_for('payments.outstanding_dues') }}" class="text-white text-decoration-none">
+                    <i class="fas fa-list"></i> View Pending
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card text-white bg-secondary h-100">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="card-title">Collection Rate</h5>
+                        <h2 class="mb-0">{{ "%.1f"|format(((stats.monthly_revenue / (stats.monthly_revenue + stats.outstanding_dues) * 100) if (stats.monthly_revenue + stats.outstanding_dues) > 0 else 0)) }}%</h2>
+                        <small class="opacity-75">Payment efficiency</small>
+                    </div>
+                    <i class="fas fa-percentage fa-2x opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-secondary border-0">
+                <a href="{{ url_for('payments.payment_list') }}" class="text-white text-decoration-none">
+                    <i class="fas fa-chart-line"></i> View Payments
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ========== END NEW CODE ========== -->
+
+<!-- ========== NEW CODE ADDED: Payment Alert Section ========== -->
+<!-- Payment Alert (only show if there are outstanding dues) -->
+{% if stats.outstanding_dues and stats.outstanding_dues > 0 %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-warning alert-dismissible fade show">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Payment Alert:</strong>
+            {{ stats.pending_students or 0 }} students have outstanding dues totaling
+            <strong>RM {{ "%.2f"|format(stats.outstanding_dues) }}</strong>
+            <a href="{{ url_for('payments.outstanding_dues') }}" class="btn btn-sm btn-outline-warning ms-2">
+                <i class="fas fa-eye"></i> View Details
+            </a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+{% endif %}
+<!-- ========== END NEW CODE ========== -->
+
+<div class="row">
+    <!-- Quick Actions -->
+    <div class="col-md-8">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="d-grid">
+                            <a href="{{ url_for('students.add_student') }}" class="btn btn-outline-primary btn-lg">
+                                <i class="fas fa-user-plus"></i> Add New Student
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="d-grid">
+                            <a href="{{ url_for('rooms.add_room') }}" class="btn btn-outline-success btn-lg">
+                                <i class="fas fa-bed"></i> Add New Room
+                            </a>
+                        </div>
+                    </div>
+                    <!-- ========== NEW CODE ADDED: Updated Payment Button ========== -->
+                    <div class="col-md-6 mb-3">
+                        <div class="d-grid">
+                            <a href="{{ url_for('payments.add_payment') }}" class="btn btn-outline-warning btn-lg">
+                                <i class="fas fa-dollar-sign"></i> Record Payment
+                            </a>
+                        </div>
+                    </div>
+                    <!-- ========== END NEW CODE ========== -->
+                    <div class="col-md-6 mb-3">
+                        <div class="d-grid">
+                            <button class="btn btn-outline-info btn-lg" onclick="alert('Generate Report feature coming soon!')">
+                                <i class="fas fa-chart-bar"></i> Generate Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <h6 class="text-muted mb-3">Management Shortcuts</h6>
+                        <div class="btn-toolbar" role="toolbar">
+                            <div class="btn-group me-2" role="group">
+                                <a href="{{ url_for('students.list_students') }}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-list"></i> All Students
+                                </a>
+                                <a href="{{ url_for('rooms.list_rooms') }}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-bed"></i> All Rooms
+                                </a>
+                                <!-- ========== NEW CODE ADDED: Updated Payment Shortcut ========== -->
+                                <a href="{{ url_for('payments.payment_list') }}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-money-bill-wave"></i> Payments
+                                </a>
+                                <!-- ========== END NEW CODE ========== -->
+                            </div>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-sm btn-outline-info" onclick="alert('Reports coming soon!')">
+                                    <i class="fas fa-chart-line"></i> Reports
+                                </button>
+                                <button class="btn btn-sm btn-outline-dark" onclick="alert('Settings coming soon!')">
+                                    <i class="fas fa-cog"></i> Settings
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Status & Recent Activities -->
+    <div class="col-md-4">
+        <!-- System Status -->
+        <div class="card mb-3">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-server"></i> System Status</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span><i class="fas fa-database text-success"></i> Database:</span>
+                    <span class="badge bg-success">Connected</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span><i class="fas fa-shield-alt text-info"></i> Security:</span>
+                    <span class="badge bg-success">Active</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span><i class="fas fa-cloud text-primary"></i> System:</span>
+                    <span class="badge bg-success">Online</span>
+                </div>
+                <!-- ========== NEW CODE ADDED: Payment System Status ========== -->
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span><i class="fas fa-money-bill-wave text-warning"></i> Payments:</span>
+                    <span class="badge bg-success">Active</span>
+                </div>
+                <!-- ========== END NEW CODE ========== -->
+                <div class="d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-clock text-warning"></i> Uptime:</span>
+                    <span class="badge bg-info">24/7</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activities -->
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="fas fa-history"></i> Recent Activities</h6>
+            </div>
+            <div class="card-body">
+                {% if stats.recent_activities and stats.recent_activities|length > 0 %}
+                    {% for activity in stats.recent_activities[:5] %}
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-dot-circle text-primary me-2"></i>
+                        <small>{{ activity }}</small>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-history fa-2x text-muted mb-2"></i>
+                        <p class="text-muted small mb-0">No recent activities</p>
+                        <small class="text-muted">System is ready for use!</small>
+                    </div>
+                {% endif %}
+            </div>
+            {% if stats.recent_activities and stats.recent_activities|length > 0 %}
+            <div class="card-footer text-center">
+                <button class="btn btn-sm btn-outline-info" onclick="alert('Activity log coming soon!')">
+                    <i class="fas fa-list"></i> View All Activities
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Progress Section -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0"><i class="fas fa-chart-bar"></i> System Overview</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Room Occupancy</h6>
+                        <div class="progress mb-3" style="height: 25px;">
+                            {% set occupancy_percentage = ((stats.occupied_rooms / stats.total_rooms) * 100) if stats.total_rooms > 0 else 0 %}
+                            <div class="progress-bar bg-info" role="progressbar"
+                                 style="width: {{ occupancy_percentage }}%"
+                                 aria-valuenow="{{ occupancy_percentage }}"
+                                 aria-valuemin="0" aria-valuemax="100">
+                                {{ "%.1f"|format(occupancy_percentage) }}% Occupied
+                            </div>
+                        </div>
+                        <small class="text-muted">
+                            {{ stats.occupied_rooms }} of {{ stats.total_rooms }} rooms occupied
+                        </small>
+                    </div>
+                    <!-- ========== NEW CODE ADDED: Payment Collection Progress ========== -->
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Payment Collection</h6>
+                        <div class="progress mb-3" style="height: 25px;">
+                            {% set collection_percentage = ((stats.monthly_revenue / (stats.monthly_revenue + stats.outstanding_dues) * 100) if (stats.monthly_revenue + stats.outstanding_dues) > 0 else 100) %}
+                            <div class="progress-bar bg-success" role="progressbar"
+                                 style="width: {{ collection_percentage }}%"
+                                 aria-valuenow="{{ collection_percentage }}"
+                                 aria-valuemin="0" aria-valuemax="100">
+                                {{ "%.1f"|format(collection_percentage) }}% Collected
+                            </div>
+                        </div>
+                        <small class="text-muted">
+                            RM {{ "%.0f"|format(stats.monthly_revenue or 0) }} collected,
+                            RM {{ "%.0f"|format(stats.outstanding_dues or 0) }} outstanding
+                        </small>
+                    </div>
+                    <!-- ========== END NEW CODE ========== -->
+                </div>
+
+                <!-- ========== NEW CODE ADDED: Updated System Features ========== -->
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <h6 class="text-muted">System Features</h6>
+                        <div class="row">
+                            <div class="col-3">
+                                <div class="text-center p-2 border rounded">
+                                    <i class="fas fa-users fa-2x text-primary mb-1"></i>
+                                    <small class="d-block">Student Management</small>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="text-center p-2 border rounded">
+                                    <i class="fas fa-bed fa-2x text-success mb-1"></i>
+                                    <small class="d-block">Room Management</small>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="text-center p-2 border rounded">
+                                    <i class="fas fa-user-friends fa-2x text-info mb-1"></i>
+                                    <small class="d-block">Assignment Management</small>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="text-center p-2 border rounded">
+                                    <i class="fas fa-money-bill-wave fa-2x text-warning mb-1"></i>
+                                    <small class="d-block">Payment Management</small>
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- ========== END NEW CODE ========== -->
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Update current time
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('currentTime').textContent = now.toLocaleString();
+    }
+
+    updateTime();
+    setInterval(updateTime, 60000); // Update every minute
+
+    // Auto-refresh statistics every 5 minutes
+    setTimeout(function() {
+        location.reload();
+    }, 300000);
+});
+</script>
+{% endblock %}

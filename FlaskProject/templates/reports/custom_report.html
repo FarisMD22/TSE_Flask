@@ -1,0 +1,645 @@
+{% extends "base.html" %}
+
+{% block title %}Custom Report Builder - Hostel Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="fas fa-magic"></i> Custom Report Builder</h2>
+        <p class="text-muted mb-0">Create customized reports with specific filters and parameters</p>
+    </div>
+    <div>
+        <a href="{{ url_for('reports.reports_dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Reports
+        </a>
+        <button class="btn btn-success" onclick="saveReportTemplate()">
+            <i class="fas fa-save"></i> Save Template
+        </button>
+    </div>
+</div>
+
+<!-- Report Builder Form -->
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-cogs"></i> Report Configuration</h5>
+            </div>
+            <div class="card-body">
+                <form id="customReportForm">
+                    <!-- Report Basic Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="reportName" class="form-label">Report Name</label>
+                            <input type="text" class="form-control" id="reportName" placeholder="Enter report name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="reportDescription" class="form-label">Description</label>
+                            <input type="text" class="form-control" id="reportDescription" placeholder="Brief description">
+                        </div>
+                    </div>
+
+                    <!-- Report Type Selection -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <label class="form-label">Report Type</label>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="reportType" id="studentReport" value="students" checked>
+                                        <label class="form-check-label" for="studentReport">
+                                            <i class="fas fa-users text-primary"></i> Student Report
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="reportType" id="financialReport" value="financial">
+                                        <label class="form-check-label" for="financialReport">
+                                            <i class="fas fa-dollar-sign text-success"></i> Financial Report
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="reportType" id="occupancyReport" value="occupancy">
+                                        <label class="form-check-label" for="occupancyReport">
+                                            <i class="fas fa-bed text-info"></i> Occupancy Report
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="reportType" id="combinedReport" value="combined">
+                                        <label class="form-check-label" for="combinedReport">
+                                            <i class="fas fa-chart-bar text-warning"></i> Combined Report
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Date Range -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label for="dateFrom" class="form-label">From Date</label>
+                            <input type="date" class="form-control" id="dateFrom">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="dateTo" class="form-label">To Date</label>
+                            <input type="date" class="form-control" id="dateTo">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="datePreset" class="form-label">Quick Date Selection</label>
+                            <select class="form-select" id="datePreset" onchange="applyDatePreset()">
+                                <option value="">Custom Range</option>
+                                <option value="today">Today</option>
+                                <option value="yesterday">Yesterday</option>
+                                <option value="thisWeek">This Week</option>
+                                <option value="lastWeek">Last Week</option>
+                                <option value="thisMonth">This Month</option>
+                                <option value="lastMonth">Last Month</option>
+                                <option value="thisQuarter">This Quarter</option>
+                                <option value="thisYear">This Year</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Filters Section -->
+                    <div id="filtersSection">
+                        <!-- Student Report Filters -->
+                        <div id="studentFilters" class="filter-section">
+                            <h6>Student Report Filters</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label for="studentCourse" class="form-label">Course</label>
+                                    <select class="form-select" id="studentCourse">
+                                        <option value="">All Courses</option>
+                                        <option value="Computer Science">Computer Science</option>
+                                        <option value="Business Administration">Business Administration</option>
+                                        <option value="Engineering">Engineering</option>
+                                        <option value="Information Technology">Information Technology</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="studentYear" class="form-label">Year of Study</label>
+                                    <select class="form-select" id="studentYear">
+                                        <option value="">All Years</option>
+                                        <option value="1">Year 1</option>
+                                        <option value="2">Year 2</option>
+                                        <option value="3">Year 3</option>
+                                        <option value="4">Year 4</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="studentStatus" class="form-label">Status</label>
+                                    <select class="form-select" id="studentStatus">
+                                        <option value="">All Status</option>
+                                        <option value="Active" selected>Active</option>
+                                        <option value="Inactive">Inactive</option>
+                                        <option value="Graduated">Graduated</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Financial Report Filters -->
+                        <div id="financialFilters" class="filter-section" style="display: none;">
+                            <h6>Financial Report Filters</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label for="paymentMethod" class="form-label">Payment Method</label>
+                                    <select class="form-select" id="paymentMethod">
+                                        <option value="">All Methods</option>
+                                        <option value="Cash">Cash</option>
+                                        <option value="Card">Card</option>
+                                        <option value="Bank Transfer">Bank Transfer</option>
+                                        <option value="Online">Online</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="paymentStatus" class="form-label">Payment Status</label>
+                                    <select class="form-select" id="paymentStatus">
+                                        <option value="">All Status</option>
+                                        <option value="Completed">Completed</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="Failed">Failed</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="amountRange" class="form-label">Amount Range</label>
+                                    <select class="form-select" id="amountRange">
+                                        <option value="">All Amounts</option>
+                                        <option value="0-100">RM 0 - 100</option>
+                                        <option value="100-500">RM 100 - 500</option>
+                                        <option value="500-1000">RM 500 - 1000</option>
+                                        <option value="1000+">RM 1000+</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Occupancy Report Filters -->
+                        <div id="occupancyFilters" class="filter-section" style="display: none;">
+                            <h6>Occupancy Report Filters</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label for="roomType" class="form-label">Room Type</label>
+                                    <select class="form-select" id="roomType">
+                                        <option value="">All Room Types</option>
+                                        <option value="Single">Single</option>
+                                        <option value="Double">Double</option>
+                                        <option value="Triple">Triple</option>
+                                        <option value="Quad">Quad</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="floorNumber" class="form-label">Floor</label>
+                                    <select class="form-select" id="floorNumber">
+                                        <option value="">All Floors</option>
+                                        <option value="1">Floor 1</option>
+                                        <option value="2">Floor 2</option>
+                                        <option value="3">Floor 3</option>
+                                        <option value="4">Floor 4</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="occupancyRate" class="form-label">Occupancy Rate</label>
+                                    <select class="form-select" id="occupancyRate">
+                                        <option value="">All Rates</option>
+                                        <option value="0-25">0% - 25%</option>
+                                        <option value="25-50">25% - 50%</option>
+                                        <option value="50-75">50% - 75%</option>
+                                        <option value="75-100">75% - 100%</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Output Format Selection -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <label class="form-label">Output Format</label>
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="includeCharts" checked>
+                                        <label class="form-check-label" for="includeCharts">
+                                            <i class="fas fa-chart-bar"></i> Include Charts
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="includeTables" checked>
+                                        <label class="form-check-label" for="includeTables">
+                                            <i class="fas fa-table"></i> Include Tables
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="includeSummary" checked>
+                                        <label class="form-check-label" for="includeSummary">
+                                            <i class="fas fa-list"></i> Include Summary
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="exportFormat" class="form-label">Export Format</label>
+                                    <select class="form-select" id="exportFormat">
+                                        <option value="html">HTML Report</option>
+                                        <option value="pdf">PDF Document</option>
+                                        <option value="csv">CSV Data</option>
+                                        <option value="excel">Excel Workbook</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-primary" onclick="previewReport()">
+                                    <i class="fas fa-eye"></i> Preview Report
+                                </button>
+                                <button type="button" class="btn btn-success" onclick="generateReport()">
+                                    <i class="fas fa-play"></i> Generate Report
+                                </button>
+                                <button type="button" class="btn btn-info" onclick="scheduleReport()">
+                                    <i class="fas fa-clock"></i> Schedule Report
+                                </button>
+                                <button type="reset" class="btn btn-secondary">
+                                    <i class="fas fa-undo"></i> Reset Form
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Preview/Templates -->
+    <div class="col-md-4">
+        <!-- Saved Templates -->
+        <div class="card mb-3">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="fas fa-bookmark"></i> Saved Templates</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Monthly Financial Summary</strong>
+                            <br>
+                            <small class="text-muted">Financial report with payment analysis</small>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="loadTemplate('financial_monthly')">
+                                <i class="fas fa-upload"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Student Demographics</strong>
+                            <br>
+                            <small class="text-muted">Course and year distribution analysis</small>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="loadTemplate('student_demographics')">
+                                <i class="fas fa-upload"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Occupancy Analysis</strong>
+                            <br>
+                            <small class="text-muted">Room utilization and trends</small>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="loadTemplate('occupancy_analysis')">
+                                <i class="fas fa-upload"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Preview -->
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-eye"></i> Report Preview</h6>
+            </div>
+            <div class="card-body" id="reportPreview">
+                <div class="text-center py-4">
+                    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Click "Preview Report" to see a sample of your custom report</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Tips -->
+        <div class="card mt-3">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0"><i class="fas fa-lightbulb"></i> Quick Tips</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success"></i>
+                        Use date presets for common time periods
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success"></i>
+                        Save frequently used report configurations as templates
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success"></i>
+                        Schedule reports for automatic generation
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success"></i>
+                        Combined reports provide comprehensive insights
+                    </li>
+                    <li>
+                        <i class="fas fa-check text-success"></i>
+                        Preview reports before generating to save time
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize form
+    initializeDateFields();
+    setupReportTypeHandlers();
+});
+
+function initializeDateFields() {
+    // Set default dates (last 30 days)
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+
+    document.getElementById('dateTo').value = today.toISOString().split('T')[0];
+    document.getElementById('dateFrom').value = thirtyDaysAgo.toISOString().split('T')[0];
+}
+
+function setupReportTypeHandlers() {
+    // Add event listeners for report type radio buttons
+    const reportTypes = document.querySelectorAll('input[name="reportType"]');
+    reportTypes.forEach(radio => {
+        radio.addEventListener('change', function() {
+            showFiltersForType(this.value);
+        });
+    });
+}
+
+function showFiltersForType(reportType) {
+    // Hide all filter sections
+    const filterSections = document.querySelectorAll('.filter-section');
+    filterSections.forEach(section => {
+        section.style.display = 'none';
+    });
+
+    // Show relevant filter section
+    const targetSection = document.getElementById(reportType + 'Filters');
+    if (targetSection) {
+        targetSection.style.display = 'block';
+    }
+}
+
+function applyDatePreset() {
+    const preset = document.getElementById('datePreset').value;
+    const today = new Date();
+    let fromDate, toDate;
+
+    switch (preset) {
+        case 'today':
+            fromDate = toDate = today;
+            break;
+        case 'yesterday':
+            fromDate = toDate = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+            break;
+        case 'thisWeek':
+            const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+            fromDate = startOfWeek;
+            toDate = new Date();
+            break;
+        case 'lastWeek':
+            const lastWeekEnd = new Date(today.setDate(today.getDate() - today.getDay() - 1));
+            const lastWeekStart = new Date(lastWeekEnd.getTime() - 6 * 24 * 60 * 60 * 1000);
+            fromDate = lastWeekStart;
+            toDate = lastWeekEnd;
+            break;
+        case 'thisMonth':
+            fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            toDate = new Date();
+            break;
+        case 'lastMonth':
+            const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+            fromDate = lastMonth;
+            toDate = lastMonthEnd;
+            break;
+        case 'thisQuarter':
+            const quarterStart = new Date(today.getFullYear(), Math.floor(today.getMonth() / 3) * 3, 1);
+            fromDate = quarterStart;
+            toDate = new Date();
+            break;
+        case 'thisYear':
+            fromDate = new Date(today.getFullYear(), 0, 1);
+            toDate = new Date();
+            break;
+        default:
+            return; // Don't change dates for custom range
+    }
+
+    if (fromDate && toDate) {
+        document.getElementById('dateFrom').value = fromDate.toISOString().split('T')[0];
+        document.getElementById('dateTo').value = toDate.toISOString().split('T')[0];
+    }
+}
+
+function previewReport() {
+    const reportType = document.querySelector('input[name="reportType"]:checked').value;
+    const reportName = document.getElementById('reportName').value || 'Custom Report';
+
+    // Generate preview content based on report type
+    let previewContent = `
+        <div class="border rounded p-3">
+            <h6 class="text-primary">${reportName}</h6>
+            <hr>
+            <div class="mb-3">
+                <strong>Report Type:</strong> ${reportType.charAt(0).toUpperCase() + reportType.slice(1)}
+            </div>
+            <div class="mb-3">
+                <strong>Date Range:</strong> ${document.getElementById('dateFrom').value} to ${document.getElementById('dateTo').value}
+            </div>
+    `;
+
+    // Add type-specific preview
+    if (reportType === 'students') {
+        previewContent += `
+            <div class="mb-2"><strong>Sample Metrics:</strong></div>
+            <ul class="list-unstyled">
+                <li>• Total Students: 45</li>
+                <li>• Active Students: 42</li>
+                <li>• Course Distribution: 4 courses</li>
+                <li>• Year Distribution: Years 1-4</li>
+            </ul>
+        `;
+    } else if (reportType === 'financial') {
+        previewContent += `
+            <div class="mb-2"><strong>Sample Metrics:</strong></div>
+            <ul class="list-unstyled">
+                <li>• Total Revenue: RM 15,600</li>
+                <li>• Payments: 156 transactions</li>
+                <li>• Outstanding: RM 2,400</li>
+                <li>• Collection Rate: 87%</li>
+            </ul>
+        `;
+    } else if (reportType === 'occupancy') {
+        previewContent += `
+            <div class="mb-2"><strong>Sample Metrics:</strong></div>
+            <ul class="list-unstyled">
+                <li>• Occupancy Rate: 78%</li>
+                <li>• Available Rooms: 8</li>
+                <li>• Peak Utilization: 95%</li>
+                <li>• Average Stay: 245 days</li>
+            </ul>
+        `;
+    }
+
+    previewContent += `
+            <div class="mt-3">
+                <small class="text-muted">This is a preview. Generate the report to see complete data.</small>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('reportPreview').innerHTML = previewContent;
+}
+
+function generateReport() {
+    // Collect form data
+    const formData = {
+        reportName: document.getElementById('reportName').value,
+        reportType: document.querySelector('input[name="reportType"]:checked').value,
+        dateFrom: document.getElementById('dateFrom').value,
+        dateTo: document.getElementById('dateTo').value,
+        exportFormat: document.getElementById('exportFormat').value,
+        includeCharts: document.getElementById('includeCharts').checked,
+        includeTables: document.getElementById('includeTables').checked,
+        includeSummary: document.getElementById('includeSummary').checked
+    };
+
+    // Validate required fields
+    if (!formData.reportName) {
+        alert('Please enter a report name');
+        return;
+    }
+
+    if (!formData.dateFrom || !formData.dateTo) {
+        alert('Please select date range');
+        return;
+    }
+
+    // Show loading
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    btn.disabled = true;
+
+    // Simulate report generation
+    setTimeout(() => {
+        alert(`Custom ${formData.reportType} report "${formData.reportName}" generated successfully!\n\nFormat: ${formData.exportFormat.toUpperCase()}\nDate Range: ${formData.dateFrom} to ${formData.dateTo}`);
+
+        // Reset button
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+
+        // In a real implementation, this would trigger the actual report generation
+        // window.open(`/reports/custom/generate?${new URLSearchParams(formData)}`, '_blank');
+    }, 3000);
+}
+
+function scheduleReport() {
+    alert('Report scheduling feature will be available in the next update!');
+}
+
+function saveReportTemplate() {
+    const reportName = document.getElementById('reportName').value;
+    if (!reportName) {
+        alert('Please enter a report name before saving template');
+        return;
+    }
+
+    alert(`Report template "${reportName}" saved successfully!`);
+}
+
+function loadTemplate(templateName) {
+    // Load predefined templates
+    const templates = {
+        'financial_monthly': {
+            reportName: 'Monthly Financial Summary',
+            reportType: 'financial',
+            datePreset: 'thisMonth',
+            includeCharts: true,
+            includeTables: true,
+            includeSummary: true
+        },
+        'student_demographics': {
+            reportName: 'Student Demographics Report',
+            reportType: 'students',
+            datePreset: 'thisYear',
+            includeCharts: true,
+            includeTables: true,
+            includeSummary: true
+        },
+        'occupancy_analysis': {
+            reportName: 'Occupancy Analysis Report',
+            reportType: 'occupancy',
+            datePreset: 'thisMonth',
+            includeCharts: true,
+            includeTables: true,
+            includeSummary: true
+        }
+    };
+
+    const template = templates[templateName];
+    if (template) {
+        // Load template values
+        document.getElementById('reportName').value = template.reportName;
+        document.querySelector(`input[name="reportType"][value="${template.reportType}"]`).checked = true;
+        document.getElementById('includeCharts').checked = template.includeCharts;
+        document.getElementById('includeTables').checked = template.includeTables;
+        document.getElementById('includeSummary').checked = template.includeSummary;
+
+        // Apply date preset if specified
+        if (template.datePreset) {
+            document.getElementById('datePreset').value = template.datePreset;
+            applyDatePreset();
+        }
+
+        // Show appropriate filters
+        showFiltersForType(template.reportType);
+
+        alert(`Template "${template.reportName}" loaded successfully!`);
+    }
+}
+</script>
+{% endblock %}

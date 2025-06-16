@@ -1,0 +1,274 @@
+<!-- Create this file: templates/assignments/dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignment Dashboard - Hostel Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/dashboard">
+                <i class="fas fa-building"></i> Hostel Management System
+            </a>
+            <div>
+                <span class="text-white me-3">Welcome, {{ session.get('full_name', session.get('username')) }}</span>
+                <a href="/logout" class="btn btn-outline-light btn-sm">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2><i class="fas fa-chart-bar me-2"></i>Assignment Dashboard</h2>
+                    <div>
+                        <a href="{{ url_for('assignments.list_assignments') }}" class="btn btn-primary">
+                            <i class="fas fa-list me-1"></i>View All Assignments
+                        </a>
+                        <a href="{{ url_for('assignments.assign_student') }}" class="btn btn-success">
+                            <i class="fas fa-plus me-1"></i>New Assignment
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-white bg-primary">
+                    <div class="card-body text-center">
+                        <i class="fas fa-bed fa-2x mb-2"></i>
+                        <h5>Active Assignments</h5>
+                        <h2>{{ stats.get('total_active_assignments', 0) }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-warning">
+                    <div class="card-body text-center">
+                        <i class="fas fa-user-clock fa-2x mb-2"></i>
+                        <h5>Unassigned Students</h5>
+                        <h2>{{ stats.get('unassigned_students', 0) }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-success">
+                    <div class="card-body text-center">
+                        <i class="fas fa-door-open fa-2x mb-2"></i>
+                        <h5>Available Rooms</h5>
+                        <h2>{{ stats.get('available_rooms', 0) }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-info">
+                    <div class="card-body text-center">
+                        <i class="fas fa-home fa-2x mb-2"></i>
+                        <h5>Available Spaces</h5>
+                        <h2>{{ stats.get('available_spaces', 0) }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Assignments -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clock me-2"></i>Recent Assignments
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if stats.recent_assignments %}
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Student</th>
+                                            <th>Room</th>
+                                            <th>Assigned Date</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for assignment in stats.recent_assignments %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ assignment.first_name }} {{ assignment.last_name }}</strong><br>
+                                                <small class="text-muted">{{ assignment.student_number }}</small>
+                                            </td>
+                                            <td>
+                                                <strong>{{ assignment.room_number }}</strong><br>
+                                                <small class="text-muted">{{ assignment.room_type }}</small>
+                                            </td>
+                                            <td>
+                                                {% if assignment.assigned_date %}
+                                                    {{ assignment.assigned_date }}
+                                                {% else %}
+                                                    <span class="text-muted">Not set</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if assignment.status == 'Active' %}
+                                                    <span class="badge bg-success">Active</span>
+                                                {% elif assignment.status == 'Completed' %}
+                                                    <span class="badge bg-secondary">Completed</span>
+                                                {% elif assignment.status == 'Transferred' %}
+                                                    <span class="badge bg-info">Transferred</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning">{{ assignment.status }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if assignment.status == 'Active' %}
+                                                    <div class="btn-group btn-group-sm">
+                                                        <a href="{{ url_for('assignments.transfer_student', assignment_id=assignment.assignment_id) }}"
+                                                           class="btn btn-outline-primary btn-sm" title="Transfer">
+                                                            <i class="fas fa-exchange-alt"></i>
+                                                        </a>
+                                                        <button class="btn btn-outline-warning btn-sm"
+                                                                onclick="showCheckoutModal({{ assignment.assignment_id }}, '{{ assignment.first_name }} {{ assignment.last_name }}')"
+                                                                title="Check Out">
+                                                            <i class="fas fa-sign-out-alt"></i>
+                                                        </button>
+                                                    </div>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">No recent assignments</h5>
+                                <p class="text-muted">Assignment history will appear here when students are assigned to rooms.</p>
+                                <a href="{{ url_for('assignments.assign_student') }}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-1"></i>Create First Assignment
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-bolt me-2"></i>Quick Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <a href="{{ url_for('assignments.assign_student') }}" class="btn btn-primary w-100 mb-2">
+                                    <i class="fas fa-plus me-1"></i>New Assignment
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="{{ url_for('assignments.list_assignments') }}" class="btn btn-outline-primary w-100 mb-2">
+                                    <i class="fas fa-list me-1"></i>All Assignments
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="{{ url_for('assignments.assignment_history') }}" class="btn btn-outline-secondary w-100 mb-2">
+                                    <i class="fas fa-history me-1"></i>History
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="/dashboard" class="btn btn-outline-info w-100 mb-2">
+                                    <i class="fas fa-home me-1"></i>Main Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div class="modal fade" id="checkoutModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Check Out Student</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="checkoutForm" method="POST">
+                    <div class="modal-body">
+                        <p>Are you sure you want to check out <strong id="studentName"></strong>?</p>
+                        <div class="mb-3">
+                            <label for="checkout_date" class="form-label">Checkout Date</label>
+                            <input type="date" class="form-control" id="checkout_date" name="checkout_date" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning">Check Out</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showCheckoutModal(assignmentId, studentName) {
+            document.getElementById('studentName').textContent = studentName;
+            document.getElementById('checkoutForm').action = `/assignments/checkout/${assignmentId}`;
+
+            // Set default checkout date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('checkout_date').value = today;
+
+            const modal = new bootstrap.Modal(document.getElementById('checkoutModal'));
+            modal.show();
+        }
+
+        // Auto-dismiss alerts
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                setTimeout(function() {
+                    if (alert.parentNode) {
+                        alert.remove();
+                    }
+                }, 5000);
+            });
+        });
+    </script>
+</body>
+</html>

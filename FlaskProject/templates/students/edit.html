@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Student - Hostel Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2><i class="fas fa-user-edit"></i> Edit Student</h2>
+                <p class="text-muted mb-0">
+                    <strong>{{ student[2] }} {{ student[3] }}</strong> ({{ student[1] }})
+                </p>
+            </div>
+            <div>
+                <a href="{{ url_for('students.view_student', student_id=student[0]) }}" class="btn btn-outline-info me-2">
+                    <i class="fas fa-eye"></i> View Profile
+                </a>
+                <a href="{{ url_for('students.list_students') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to List
+                </a>
+            </div>
+        </div>
+
+        <!-- Form Card -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-edit"></i> Update Student Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="editStudentForm">
+                    <div class="row">
+                        <!-- Personal Information Column -->
+                        <div class="col-md-6">
+                            <div class="border-end pe-4">
+                                <h6 class="text-primary mb-3 pb-2 border-bottom">
+                                    <i class="fas fa-user"></i> Personal Information
+                                </h6>
+
+                                <div class="mb-3">
+                                    <label for="student_number" class="form-label">
+                                        <i class="fas fa-id-card text-primary"></i> Student Number <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="student_number"
+                                           name="student_number" value="{{ student[1] }}" required>
+                                    <div class="form-text">Unique identifier for the student</div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="first_name" class="form-label">
+                                                <i class="fas fa-user text-primary"></i> First Name <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="text" class="form-control" id="first_name"
+                                                   name="first_name" value="{{ student[2] }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="last_name" class="form-label">
+                                                <i class="fas fa-user text-primary"></i> Last Name <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="text" class="form-control" id="last_name"
+                                                   name="last_name" value="{{ student[3] }}" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">
+                                        <i class="fas fa-envelope text-primary"></i> Email Address <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="email" class="form-control" id="email"
+                                           name="email" value="{{ student[4] }}" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="phone" class="form-label">
+                                        <i class="fas fa-phone text-primary"></i> Phone Number
+                                    </label>
+                                    <input type="tel" class="form-control" id="phone"
+                                           name="phone" value="{{ student[5] or '' }}">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="address" class="form-label">
+                                        <i class="fas fa-map-marker-alt text-primary"></i> Home Address
+                                    </label>
+                                    <textarea class="form-control" id="address" name="address" rows="3">{{ student[6] or '' }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Academic & Guardian Information Column -->
+                        <div class="col-md-6">
+                            <div class="ps-4">
+                                <h6 class="text-success mb-3 pb-2 border-bottom">
+                                    <i class="fas fa-graduation-cap"></i> Academic Information
+                                </h6>
+
+                                <div class="mb-3">
+                                    <label for="course" class="form-label">
+                                        <i class="fas fa-book text-success"></i> Course/Program
+                                    </label>
+                                    <input type="text" class="form-control" id="course"
+                                           name="course" value="{{ student[9] or '' }}">
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="year_of_study" class="form-label">
+                                                <i class="fas fa-calendar text-success"></i> Year of Study
+                                            </label>
+                                            <select class="form-select" id="year_of_study" name="year_of_study">
+                                                <option value="">Select Year</option>
+                                                <option value="1" {% if student[10] == 1 %}selected{% endif %}>Year 1 (Foundation)</option>
+                                                <option value="2" {% if student[10] == 2 %}selected{% endif %}>Year 2 (Diploma)</option>
+                                                <option value="3" {% if student[10] == 3 %}selected{% endif %}>Year 3 (Degree)</option>
+                                                <option value="4" {% if student[10] == 4 %}selected{% endif %}>Year 4 (Honors)</option>
+                                                <option value="5" {% if student[10] == 5 %}selected{% endif %}>Year 5 (Masters)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="status" class="form-label">
+                                                <i class="fas fa-info-circle text-success"></i> Student Status
+                                            </label>
+                                            <select class="form-select" id="status" name="status">
+                                                <option value="Active" {% if student[12] == 'Active' %}selected{% endif %}>Active</option>
+                                                <option value="Inactive" {% if student[12] == 'Inactive' %}selected{% endif %}>Inactive</option>
+                                                <option value="Graduated" {% if student[12] == 'Graduated' %}selected{% endif %}>Graduated</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <h6 class="text-warning mb-3 pb-2 border-bottom">
+                                    <i class="fas fa-user-friends"></i> Guardian Information
+                                </h6>
+
+                                <div class="mb-3">
+                                    <label for="guardian_name" class="form-label">
+                                        <i class="fas fa-user-tie text-warning"></i> Guardian Full Name
+                                    </label>
+                                    <input type="text" class="form-control" id="guardian_name"
+                                           name="guardian_name" value="{{ student[7] or '' }}">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="guardian_phone" class="form-label">
+                                        <i class="fas fa-phone-alt text-warning"></i> Guardian Phone
+                                    </label>
+                                    <input type="tel" class="form-control" id="guardian_phone"
+                                           name="guardian_phone" value="{{ student[8] or '' }}">
+                                </div>
+
+                                <!-- Additional Information -->
+                                <div class="mt-4 p-3 bg-light rounded">
+                                    <h6 class="text-info mb-2">
+                                        <i class="fas fa-info-circle"></i> System Information
+                                    </h6>
+                                    <small class="text-muted">
+                                        <strong>Date Joined:</strong> {{ student[11] if student[11] else 'Not specified' }}<br>
+                                        <strong>Created:</strong> {{ student[13] if student[13] else 'Not available' }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="border-top pt-4">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle"></i>
+                                            Last modified: <span id="lastModified">Just now</span>
+                                        </small>
+                                    </div>
+                                    <div>
+                                        <a href="{{ url_for('students.view_student', student_id=student[0]) }}" class="btn btn-outline-info me-2">
+                                            <i class="fas fa-eye"></i> View Profile
+                                        </a>
+                                        <a href="{{ url_for('students.list_students') }}" class="btn btn-outline-secondary me-2">
+                                            <i class="fas fa-times"></i> Cancel
+                                        </a>
+                                        <button type="submit" class="btn btn-warning">
+                                            <i class="fas fa-save"></i> Update Student
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.getElementById('editStudentForm');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+
+    // Update last modified time
+    document.getElementById('lastModified').textContent = new Date().toLocaleString();
+});
+</script>
+{% endblock %}

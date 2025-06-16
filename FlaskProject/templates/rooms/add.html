@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Add Room - Hostel Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2><i class="fas fa-plus-circle"></i> Add New Room</h2>
+                <p class="text-muted mb-0">Create a new room in the hostel system</p>
+            </div>
+            <a href="{{ url_for('rooms.list_rooms') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Rooms
+            </a>
+        </div>
+
+        <!-- Form Card -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-bed"></i> Room Information</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="addRoomForm">
+                    <div class="row">
+                        <!-- Basic Information Column -->
+                        <div class="col-md-6">
+                            <div class="border-end pe-4">
+                                <h6 class="text-primary mb-3 pb-2 border-bottom">
+                                    <i class="fas fa-info-circle"></i> Basic Information
+                                </h6>
+
+                                <div class="mb-3">
+                                    <label for="room_number" class="form-label">
+                                        <i class="fas fa-door-closed text-primary"></i> Room Number <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="room_number"
+                                           name="room_number" required placeholder="e.g., 101, A-205">
+                                    <div class="form-text">Unique identifier for the room</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="room_type" class="form-label">
+                                        <i class="fas fa-home text-primary"></i> Room Type <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="room_type" name="room_type" required>
+                                        <option value="">Select Room Type</option>
+                                        <option value="Single">Single Room (1 person)</option>
+                                        <option value="Double">Double Room (2 persons)</option>
+                                        <option value="Triple">Triple Room (3 persons)</option>
+                                        <option value="Quad">Quad Room (4 persons)</option>
+                                    </select>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="capacity" class="form-label">
+                                                <i class="fas fa-users text-primary"></i> Capacity <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="number" class="form-control" id="capacity"
+                                                   name="capacity" min="1" max="10" required placeholder="1">
+                                            <div class="form-text">Max persons allowed</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="floor_number" class="form-label">
+                                                <i class="fas fa-layer-group text-primary"></i> Floor Number <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="number" class="form-control" id="floor_number"
+                                                   name="floor_number" min="1" max="50" required placeholder="1">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Financial Information Column -->
+                        <div class="col-md-6">
+                            <div class="ps-4">
+                                <h6 class="text-success mb-3 pb-2 border-bottom">
+                                    <i class="fas fa-dollar-sign"></i> Financial Information
+                                </h6>
+
+                                <div class="mb-3">
+                                    <label for="rent_amount" class="form-label">
+                                        <i class="fas fa-money-bill-wave text-success"></i> Monthly Rent <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" class="form-control" id="rent_amount"
+                                               name="rent_amount" min="0" step="0.01" required placeholder="500.00">
+                                    </div>
+                                    <div class="form-text">Monthly rent amount in USD</div>
+                                </div>
+
+                                <!-- Room Features -->
+                                <div class="mt-4">
+                                    <h6 class="text-info mb-3 pb-2 border-bottom">
+                                        <i class="fas fa-star"></i> Room Features
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="feature_ac" checked disabled>
+                                                <label class="form-check-label text-muted" for="feature_ac">
+                                                    <i class="fas fa-snowflake"></i> Air Conditioning (Standard)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="feature_wifi" checked disabled>
+                                                <label class="form-check-label text-muted" for="feature_wifi">
+                                                    <i class="fas fa-wifi"></i> WiFi Internet (Standard)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" id="feature_furniture" checked disabled>
+                                                <label class="form-check-label text-muted" for="feature_furniture">
+                                                    <i class="fas fa-bed"></i> Basic Furniture (Standard)
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle"></i> All rooms include standard amenities
+                                    </small>
+                                </div>
+
+                                <!-- Pricing Guidelines -->
+                                <div class="mt-4 p-3 bg-light rounded">
+                                    <h6 class="text-warning mb-2">
+                                        <i class="fas fa-lightbulb"></i> Pricing Guidelines
+                                    </h6>
+                                    <small class="text-muted">
+                                        <strong>Suggested Rates:</strong><br>
+                                        • Single Room: $400 - $600/month<br>
+                                        • Double Room: $250 - $400/month<br>
+                                        • Triple Room: $200 - $300/month<br>
+                                        • Quad Room: $150 - $250/month
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="border-top pt-4">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle"></i>
+                                            All fields marked with <span class="text-danger">*</span> are required
+                                        </small>
+                                    </div>
+                                    <div>
+                                        <a href="{{ url_for('rooms.list_rooms') }}" class="btn btn-outline-secondary me-2">
+                                            <i class="fas fa-times"></i> Cancel
+                                        </a>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save"></i> Add Room
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Help Card -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6 class="text-primary mb-3"><i class="fas fa-question-circle"></i> Need Help?</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <small>
+                            <strong>Room Number:</strong> Use a clear numbering system (e.g., Floor + Room number: 101, 205)
+                        </small>
+                    </div>
+                    <div class="col-md-6">
+                        <small>
+                            <strong>Capacity:</strong> Should match the room type selected above
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.getElementById('addRoomForm');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+
+    // Auto-update capacity based on room type
+    const roomTypeSelect = document.getElementById('room_type');
+    const capacityInput = document.getElementById('capacity');
+
+    roomTypeSelect.addEventListener('change', function() {
+        const roomType = this.value;
+        switch(roomType) {
+            case 'Single':
+                capacityInput.value = 1;
+                break;
+            case 'Double':
+                capacityInput.value = 2;
+                break;
+            case 'Triple':
+                capacityInput.value = 3;
+                break;
+            case 'Quad':
+                capacityInput.value = 4;
+                break;
+            default:
+                capacityInput.value = '';
+        }
+    });
+
+    // Auto-suggest rent based on room type
+    const rentInput = document.getElementById('rent_amount');
+    roomTypeSelect.addEventListener('change', function() {
+        const roomType = this.value;
+        switch(roomType) {
+            case 'Single':
+                rentInput.placeholder = '500.00';
+                break;
+            case 'Double':
+                rentInput.placeholder = '300.00';
+                break;
+            case 'Triple':
+                rentInput.placeholder = '250.00';
+                break;
+            case 'Quad':
+                rentInput.placeholder = '200.00';
+                break;
+            default:
+                rentInput.placeholder = '0.00';
+        }
+    });
+});
+</script>
+{% endblock %}

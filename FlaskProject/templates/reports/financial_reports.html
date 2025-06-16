@@ -1,0 +1,716 @@
+{% extends "base.html" %}
+
+{% block title %}Financial Reports - Hostel Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="fas fa-dollar-sign"></i> Financial Reports</h2>
+        <p class="text-muted mb-0">Revenue analysis and payment tracking</p>
+    </div>
+    <div>
+        <a href="{{ url_for('reports.reports_dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Reports
+        </a>
+        <button class="btn btn-primary" onclick="window.print()">
+            <i class="fas fa-print"></i> Print Report
+        </button>
+    </div>
+</div>
+
+<!-- Date Range Filter -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-filter"></i> Financial Report Filters</h5>
+            </div>
+            <div class="card-body">
+                <form id="filterForm" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="dateFrom" class="form-label">From Date</label>
+                        <input type="date" class="form-control" id="dateFrom" value="{{ date_from }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="dateTo" class="form-label">To Date</label>
+                        <input type="date" class="form-control" id="dateTo" value="{{ date_to }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="reportPeriod" class="form-label">Period</label>
+                        <select class="form-select" id="reportPeriod">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly" selected>Monthly</option>
+                            <option value="quarterly">Quarterly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="paymentMethod" class="form-label">Payment Method</label>
+                        <select class="form-select" id="paymentMethod">
+                            <option value="">All Methods</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Card">Card</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Online">Online</option>
+                            <option value="Cheque">Cheque</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="button" class="btn btn-success" onclick="applyFilters()">
+                            <i class="fas fa-search"></i> Apply Filters
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="resetFilters()">
+                            <i class="fas fa-undo"></i> Reset
+                        </button>
+                        <button type="button" class="btn btn-warning" onclick="exportFinancialReport()">
+                            <i class="fas fa-download"></i> Export Report
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Financial Summary -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-success h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">Total Revenue</h5>
+                <h2 class="mb-0">RM {{ "%.2f"|format(financial_summary.total_revenue or 0) }}</h2>
+                <small class="opacity-75">Selected period</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-danger h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">Outstanding</h5>
+                <h2 class="mb-0">RM {{ "%.2f"|format(financial_summary.outstanding_amount or 0) }}</h2>
+                <small class="opacity-75">Unpaid dues</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">Collection Rate</h5>
+                <h2 class="mb-0">{{ "%.1f"|format(financial_summary.collection_rate or 0) }}%</h2>
+                <small class="opacity-75">Payment efficiency</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">Avg. Payment</h5>
+                <h2 class="mb-0">RM {{ "%.2f"|format(financial_summary.average_payment or 0) }}</h2>
+                <small class="opacity-75">Per transaction</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Revenue Charts -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Revenue Trend</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueTrendChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Payment Methods</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="paymentMethodChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Monthly Revenue Breakdown -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-calendar-alt"></i> Monthly Revenue Breakdown</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>Total Revenue</th>
+                                <th>Payments Count</th>
+                                <th>Average Payment</th>
+                                <th>Outstanding</th>
+                                <th>Collection Rate</th>
+                                <th>Growth</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for month in monthly_breakdown %}
+                            <tr>
+                                <td><strong>{{ month.month_name }}</strong></td>
+                                <td>RM {{ "%.2f"|format(month.total_revenue) }}</td>
+                                <td>{{ month.payment_count }}</td>
+                                <td>RM {{ "%.2f"|format(month.average_payment) }}</td>
+                                <td>RM {{ "%.2f"|format(month.outstanding) }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 me-2" style="height: 20px;">
+                                            <div class="progress-bar
+                                                {% if month.collection_rate >= 90 %}bg-success
+                                                {% elif month.collection_rate >= 75 %}bg-warning
+                                                {% else %}bg-danger
+                                                {% endif %}"
+                                                role="progressbar"
+                                                style="width: {{ month.collection_rate }}%"
+                                                aria-valuenow="{{ month.collection_rate }}"
+                                                aria-valuemin="0"
+                                                aria-valuemax="100">
+                                                {{ "%.1f"|format(month.collection_rate) }}%
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if month.growth_rate > 0 %}
+                                        <span class="text-success">
+                                            <i class="fas fa-arrow-up"></i> +{{ "%.1f"|format(month.growth_rate) }}%
+                                        </span>
+                                    {% elif month.growth_rate < 0 %}
+                                        <span class="text-danger">
+                                            <i class="fas fa-arrow-down"></i> {{ "%.1f"|format(month.growth_rate) }}%
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">
+                                            <i class="fas fa-minus"></i> 0.0%
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Category Analysis -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-tags"></i> Revenue by Category</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="categoryRevenueChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Outstanding Dues Analysis</h5>
+            </div>
+            <div class="card-body">
+                <h6>Outstanding Dues by Age</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Age Range</th>
+                                <th>Count</th>
+                                <th>Amount</th>
+                                <th>Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for due in outstanding_analysis %}
+                            <tr>
+                                <td>{{ due.age_range }}</td>
+                                <td>{{ due.count }}</td>
+                                <td>RM {{ "%.2f"|format(due.amount) }}</td>
+                                <td>
+                                    <div class="progress" style="height: 15px;">
+                                        <div class="progress-bar
+                                            {% if due.age_range == 'Overdue (>30 days)' %}bg-danger
+                                            {% elif due.age_range == 'Due Soon (1-30 days)' %}bg-warning
+                                            {% else %}bg-success
+                                            {% endif %}"
+                                            role="progressbar"
+                                            style="width: {{ due.percentage }}%">
+                                            {{ "%.1f"|format(due.percentage) }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Transactions -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history"></i> Recent Transactions</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="recentTransactionsTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Student</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Status</th>
+                                <th>Receipt</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in recent_payments %}
+                            <tr>
+                                <td>{{ payment.payment_date.strftime('%Y-%m-%d') if payment.payment_date else 'N/A' }}</td>
+                                <td>
+                                    <strong>{{ payment.student_name }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ payment.student_number }}</small>
+                                </td>
+                                <td>{{ payment.category_name }}</td>
+                                <td><strong>RM {{ "%.2f"|format(payment.amount) }}</strong></td>
+                                <td>
+                                    <span class="badge
+                                        {% if payment.payment_method == 'Cash' %}bg-success
+                                        {% elif payment.payment_method == 'Card' %}bg-primary
+                                        {% elif payment.payment_method == 'Bank Transfer' %}bg-info
+                                        {% elif payment.payment_method == 'Online' %}bg-warning
+                                        {% else %}bg-secondary
+                                        {% endif %}">
+                                        {{ payment.payment_method }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge
+                                        {% if payment.payment_status == 'Completed' %}bg-success
+                                        {% elif payment.payment_status == 'Pending' %}bg-warning
+                                        {% elif payment.payment_status == 'Failed' %}bg-danger
+                                        {% else %}bg-secondary
+                                        {% endif %}">
+                                        {{ payment.payment_status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if payment.receipt_number %}
+                                        <code>{{ payment.receipt_number }}</code>
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewPaymentDetails('{{ payment.payment_id }}')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    {% if payment.receipt_number %}
+                                    <button class="btn btn-sm btn-outline-success" onclick="printReceipt('{{ payment.receipt_number }}')">
+                                        <i class="fas fa-print"></i>
+                                    </button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Financial Performance Indicators -->
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Key Performance Indicators</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Revenue Growth (MoM)</span>
+                        <span class="
+                            {% if financial_kpis.revenue_growth > 0 %}text-success
+                            {% elif financial_kpis.revenue_growth < 0 %}text-danger
+                            {% else %}text-muted
+                            {% endif %}">
+                            {{ "%.1f"|format(financial_kpis.revenue_growth or 0) }}%
+                        </span>
+                    </div>
+                    <div class="progress" style="height: 5px;">
+                        <div class="progress-bar bg-success" role="progressbar"
+                             style="width: {{ (financial_kpis.revenue_growth + 50) if financial_kpis.revenue_growth else 50 }}%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Collection Efficiency</span>
+                        <span class="text-primary">{{ "%.1f"|format(financial_kpis.collection_efficiency or 0) }}%</span>
+                    </div>
+                    <div class="progress" style="height: 5px;">
+                        <div class="progress-bar bg-primary" role="progressbar"
+                             style="width: {{ financial_kpis.collection_efficiency or 0 }}%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Average Days to Pay</span>
+                        <span class="text-info">{{ financial_kpis.avg_days_to_pay or 0 }} days</span>
+                    </div>
+                    <div class="progress" style="height: 5px;">
+                        <div class="progress-bar bg-info" role="progressbar"
+                             style="width: {{ (30 - (financial_kpis.avg_days_to_pay or 0)) * 3.33 if (financial_kpis.avg_days_to_pay or 0) <= 30 else 0 }}%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Late Payment Rate</span>
+                        <span class="text-warning">{{ "%.1f"|format(financial_kpis.late_payment_rate or 0) }}%</span>
+                    </div>
+                    <div class="progress" style="height: 5px;">
+                        <div class="progress-bar bg-warning" role="progressbar"
+                             style="width: {{ financial_kpis.late_payment_rate or 0 }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-users"></i> Top Paying Students</h5>
+            </div>
+            <div class="card-body">
+                {% if top_paying_students %}
+                    <div class="list-group list-group-flush">
+                        {% for student in top_paying_students %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ student.student_name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ student.student_number }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-success">RM {{ "%.2f"|format(student.total_paid) }}</span>
+                                <br>
+                                <small class="text-muted">{{ student.payment_count }} payments</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-center text-muted">No payment data available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-clock"></i> Payment Timing Analysis</h5>
+            </div>
+            <div class="card-body">
+                <h6>Payments by Day of Week</h6>
+                <canvas id="paymentTimingChart" width="400" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadRevenueTrendChart();
+    loadPaymentMethodChart();
+    loadCategoryRevenueChart();
+    loadPaymentTimingChart();
+    initializeFilters();
+});
+
+function loadRevenueTrendChart() {
+    fetch(`/reports/api/chart-data/revenue_trend?date_from=${document.getElementById('dateFrom').value}&date_to=${document.getElementById('dateTo').value}`)
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('revenueTrendChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels || ['No Data'],
+                    datasets: [{
+                        label: 'Revenue (RM)',
+                        data: data.data || [0],
+                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Revenue (RM)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Revenue Trend Over Time'
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading revenue trend chart:', error);
+            // Fallback chart with sample data
+            const ctx = document.getElementById('revenueTrendChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Sample Revenue (RM)',
+                        data: [5000, 6200, 5800, 7100, 6800, 7500],
+                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        });
+}
+
+function loadPaymentMethodChart() {
+    fetch('/reports/api/chart-data/payment_methods')
+        .then(response => response.json())
+        .then(data => {
+            const ctx = document.getElementById('paymentMethodChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.labels || ['Bank Transfer', 'Cash', 'Card', 'Online'],
+                    datasets: [{
+                        data: data.amounts || [7500, 3600, 2400, 1200],
+                        backgroundColor: [
+                            '#36A2EB',
+                            '#FF6384',
+                            '#FFCE56',
+                            '#4BC0C0'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Revenue by Payment Method'
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading payment method chart:', error);
+            // Fallback chart
+            const ctx = document.getElementById('paymentMethodChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Bank Transfer', 'Cash', 'Card', 'Online'],
+                    datasets: [{
+                        data: [7500, 3600, 2400, 1200],
+                        backgroundColor: ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        });
+}
+
+function loadCategoryRevenueChart() {
+    const ctx = document.getElementById('categoryRevenueChart').getContext('2d');
+    // Sample data for category revenue
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Monthly Rent', 'Security Deposit', 'Utilities', 'Maintenance', 'Late Fees'],
+            datasets: [{
+                label: 'Revenue (RM)',
+                data: [12000, 3500, 2200, 800, 450],
+                backgroundColor: [
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(255, 206, 86, 0.8)',
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(153, 102, 255, 0.8)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Revenue (RM)'
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Revenue by Payment Category'
+                }
+            }
+        }
+    });
+}
+
+function loadPaymentTimingChart() {
+    const ctx = document.getElementById('paymentTimingChart').getContext('2d');
+    // Sample data for payment timing
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'Number of Payments',
+                data: [8, 12, 15, 10, 18, 5, 3],
+                backgroundColor: 'rgba(75, 192, 192, 0.8)'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Payments'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function initializeFilters() {
+    // Set default dates (last 30 days)
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+
+    if (!document.getElementById('dateFrom').value) {
+        document.getElementById('dateFrom').value = thirtyDaysAgo.toISOString().split('T')[0];
+    }
+    if (!document.getElementById('dateTo').value) {
+        document.getElementById('dateTo').value = today.toISOString().split('T')[0];
+    }
+}
+
+function applyFilters() {
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    const reportPeriod = document.getElementById('reportPeriod').value;
+    const paymentMethod = document.getElementById('paymentMethod').value;
+
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (dateFrom) params.append('date_from', dateFrom);
+    if (dateTo) params.append('date_to', dateTo);
+    if (reportPeriod) params.append('period', reportPeriod);
+    if (paymentMethod) params.append('payment_method', paymentMethod);
+
+    // Reload page with new parameters
+    window.location.href = `/reports/financial?${params.toString()}`;
+}
+
+function resetFilters() {
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    document.getElementById('reportPeriod').value = 'monthly';
+    document.getElementById('paymentMethod').value = '';
+    initializeFilters();
+}
+
+function exportFinancialReport() {
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    const reportPeriod = document.getElementById('reportPeriod').value;
+    const paymentMethod = document.getElementById('paymentMethod').value;
+
+    const params = new URLSearchParams();
+    if (dateFrom) params.append('date_from', dateFrom);
+    if (dateTo) params.append('date_to', dateTo);
+    if (reportPeriod) params.append('period', reportPeriod);
+    if (paymentMethod) params.append('payment_method', paymentMethod);
+
+    window.open(`/reports/export/financial_report?${params.toString()}`, '_blank');
+}
+
+function viewPaymentDetails(paymentId) {
+    // In a real implementation, this would show detailed payment information
+    alert(`Viewing payment details for ID: ${paymentId}`);
+}
+
+function printReceipt(receiptNumber) {
+    // In a real implementation, this would generate and print a receipt
+    alert(`Printing receipt: ${receiptNumber}`);
+}
+</script>
+{% endblock %}
